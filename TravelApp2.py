@@ -1,9 +1,9 @@
 import pickle
 '''
-travel app, flight, housing, entertainment, transport, food, merch.
+travel app; 'Transport','Lodging','Event','Meal','Merchandise','Fee'
 use classes to sort and organize and call data as needed
 
-#organizes on calendar, shows what has not been booked for dates, ex. no hotel wednesday night
+#possible future feature: organizes on calendar, shows what has not been booked for dates, ex. no hotel wednesday night
 
 enter ahead of time:
 flight:price, datetime,airline, airports, conf# seat#?
@@ -16,10 +16,8 @@ food: price, datetime
 merch: item, location, price
 Fee:
 '''
+# charge_options = ['Transport','Lodging','Event','Meal','Merchandise','Fee']
 
-
-charge_options = ['Transport','Lodging','Event','Meal','Merchandise','Fee']
-#possibly make charge opt a dict with keys as type and vaule list as subtype
 
 class ReservedCost():
     #type: transport,lodging,event; sub_type:[flight,train,boat],[hotel,bnb,camping]
@@ -44,8 +42,8 @@ class ReservedCost():
 
 
     def edit_cost(self):
-        #should maybe be using a dictionary here? for printing and item assignment instead of list?
-        edit_lst=[]
+        ## CLI for EditCostPage
+        edit_lst=[] #should maybe be using a dictionary here? for printing and item assignment instead of list?
         for i in [(self.type,'type'),(self.sub_type,'sub_type'),(self.price,'price'),(self.pay_method,'payment method'),(self.pointa,'pointa'),(self.start_date,'start date mm/dd/yy'),(self.start_time,'start time'),(self.pointb,'pointb'),(self.end_date,'end date mm/dd/yy'),(self.end_time,'end_time'),(self.conf,'conf'),(self.company,'company'),(self.misc,'misc')]:
             print("{}={}\ttype new info or 'enter' to skip".format(i[1],i[0]))
             edited_ans=input()
@@ -74,6 +72,7 @@ class ReservedCost():
 
 
     def __str__(self):
+        #CLI frame for EditCostPage
         return(("type= {}\nprice=${}\npay_method={}\npointa={}\nstart_date={}\nstart_time= {}\npointb= {}\nend_date= {}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type,\
             self.price, self.pay_method, self.pointa, self.start_date,\
             self.start_time, self.pointb, self.end_date,self.end_time,\
@@ -98,8 +97,7 @@ class UnreservedCost():
         self.misc = misc
 
     def edit_cost(self):
-        #couldnt get loop asignment to work,
-        #saved answers to list for asignment after loop
+        ## CLI for EditCostPage
         edit_lst=[]
         for i in [(self.type,'type'),(self.item,'item'),(self.price,'price'),(self.pay_method,'pay_method'),(self.date,'date mm/dd/yy'),(self.loc,'loc'),(self.misc,'misc')]:
             print("{}={}\ttype new info or 'enter' to skip".format(i[1],i[0]))
@@ -124,6 +122,7 @@ class UnreservedCost():
 
 
     def __str__(self):
+        ## CLI frame for EditCostPage
         return ("type= {}\nprice= ${}\nitem= {}\npay_method= {}\ndate= \
             {}\nloc = {}\nmisc = {}".format(self.type,self.price,self.item,
             self.pay_method,self.date,self.loc,self.misc
@@ -131,20 +130,21 @@ class UnreservedCost():
 
 
 class Trip():
-    #add in a sort by date clause
     def __init__(self,destination='', approx_date='None',budget='None'):
         self.trip_plans = []
         self.destination = destination
         self.approx_date = approx_date
         self.budget = budget
 
-    def __str__(self):
+    def print_details(self):
+        ## CLI print format for TripListPage, EditTripPage,TripDetailsPage
         date=''
         for i in self.approx_date:
             date += (i+' ')
         return self.destination + ' - '+ date # +"budget: "+str(self.budget)
 
     def update_trip_title(self):
+        ## CLI frame for EditTripPage
         edit_lst=[]
         for i in [(self.destination,'Trip Destination'),(self.approx_date,'Approximate Date'),(self.budget,'Budget')]:
             print("{} = {}".format(i[1],i[0]))
@@ -188,7 +188,7 @@ class Trip():
             print("error, could not update")
 
     def trip_total_price(self):
-        #loop to grab price int and add them together
+        #loops to grab price int and add them together
         trip_total = 0
         costs=0
         for cost in self.trip_plans:
@@ -226,6 +226,8 @@ class Trip():
 
     def add_cost(self):
         while True:
+            #button in TripDetailsPage triggers popup that asks charge type,
+            #then directs to EditCostPage with variable loading correct type
             print("What type of charge is it?\nTransport, Lodging, Event\nMeal, Merchandise, Fee")
             charge_options = ['transport','lodging','event','meal','merchandise','fee','t','l','e','f','q']
             charge_type_full = input()
@@ -249,6 +251,7 @@ class Trip():
             return None # for 'quit'
 
     def remove_cost(self, index_place):
+        ## button on EditCostPage, triggers pop up to confirm, redirects to TripDetailsPage
         confirm = input("are you sure you want to delete this cost:\n{}\n[Y/n]".format(self.trip_plans[index_place]))
         if confirm == 'Y':
             self.trip_plans.pop(index_place)
@@ -283,12 +286,15 @@ def load_trip_files(filename):
 
 
 def vacay_trips_display(vacations): #prints vacations in a numbered list
+    ## CLI frame for TripListPage
     for num,trip in enumerate(vacations):
         print(str(num),end='. ',flush=True)
         print(trip)
     print("--end of Vacations list--\n") #test line/ delete later
 
 def new_or_edit(filename):
+    ##CLI for new or edit trip choices, will be buttons;
+    # get rid of TRY, generate blank page, grey out 'edit' button
     #maybe split into more try functions so failure further down doesnt break out of the whole 'try'.
     try:
         vacations = load_trip_files(filename)
@@ -307,8 +313,8 @@ def new_or_edit(filename):
             return (create_new,None)
         else:
             return ('new',None)
-    except: #,TypeError
-        print('Program Error, Contact Administrator')
+    # except: #,TypeError
+    #     print('Program Error, Contact Administrator')
         #doesnt keep program running, it still breaks
 
 
@@ -319,6 +325,7 @@ def create_new_trip():
     return trip
 
 def create_edit_trip(choice,vacations):
+    ##CLI frame TripListPage, create edit buttons next to each trip summary
     vacay_trips_display(vacations)
     print('which trip would you like to open? ')
 
@@ -338,12 +345,15 @@ def create_edit_trip(choice,vacations):
     print('\n')
     print(trip)
     def trip_plans_display(trip): #prints a numbered list of trip plans
+    #CLI TripDetailsPage func
         for num,cost in enumerate(trip.trip_plans):
             print(str(num)+': '+cost.type)
         print("end of scheduled plans\n")
 
     trip_plans_display(trip) #summary to help make descision
     while True:
+        #CLI TripDetailsPage, buttons: edit>>EditCostPage; add>>popup>>EditCostPage; rename/budget>>EditTripPage; done>>TripListPage
+        #delete cost should be on edit cost page buttons, deletetrip on EditTripPage
         edit_trip=input("Details: view, add, edit, total, delete cost, renametrip, budget, delete trip, quit/done")
         if edit_trip=='':
             continue #looping if pressing enter
@@ -399,6 +409,7 @@ def create_edit_trip(choice,vacations):
                 print(trip.trip_plans[int(cost_num)])
             elif edit_trip =='view':
                 print(trip.trip_plans[int(cost_num)])
+
             elif edit_trip=="delete cost":
                 trip.remove_cost(int(cost_num))
 
@@ -464,14 +475,133 @@ def save_trip_list(trip_list, filename):
         except:
             print('other error')
 
+############################# tkinter stuff ###################################
+from tkinter import *
 
-#### TODO: split into smaller chunks of functions maybe vacations class?
+def main():
+    class TravelApp(Tk):
+            def __init__(self, *args, **kwargs):
+                Tk.__init__(self, *args, **kwargs)
 
-#add logic to customize class per charge type
+                container = Frame(self)
+                container.pack(side="top", fill="both", expand = True)
+                container.grid_rowconfigure(0, weight=1)
+                container.grid_columnconfigure(0, weight=1)
 
-#add approx_date_end so can have date range for trip?
 
-##just finnished adding budget option and counter to check budget vs total.
-    #possibly merge 'total' option with 'budget' option. no reason why those shouldnt be together
+                self.frames = {}
+                for F in (TripListPage, EditTripPage,TripDetailsPage, EditCostPage):
+                    frame = F(container, self)
+                    self.frames[F] = frame
+                    frame.grid(row=0, column=0, sticky="nsew")
 
-## add date sorting to trip costs to appear as a schedual.
+                self.show_frame(TripListPage,vacations[0])
+
+            def show_frame(self, cont, locatorID=None):
+                frame = self.frames[cont]
+                print("UNDER SHOW FRAME:")
+                print(locatorID)
+                frame.locatorID= locatorID
+                frame.tkraise()
+
+    class TripListPage(Frame):
+        def __init__(self, parent, controller, locatorID=None):
+            Frame.__init__(self,parent)
+
+            try:
+                for trip in vacations:
+                    label = Label(self, text=trip.print_details())
+                    label.pack(pady=10,padx=10)
+                    button2 = Button(self, text="EDIT existing trip",
+                            command=lambda: controller.show_frame(EditTripPage,locatorID=trip))
+                    button2.pack()
+                    #TODO: edit button should redirect to specific TripDetailsPage
+            except TypeError:
+                #currently displays blank page with ADD button active
+                pass
+
+            button = Button(self, text="ADD a new trip",
+                                command=lambda: controller.show_frame(EditTripPage,vacations[0]))
+            button.pack()
+
+
+    class EditTripPage(Frame):
+            def __init__(self, parent, controller,locatorID=None):
+                self.locatorID=locatorID
+                Frame.__init__(self, parent)
+                print("inside Edit trip page:") ###why arent these triggering?!!!
+                print(locatorID)
+                print(self.locatorID)
+                # label = Label(self, text="Create or Edit Trip Details Here")
+                # label.pack(pady=10,padx=10)
+                #
+                # label = Label(self, text=locatorID.print_details())
+                # label.pack(pady=10,padx=10)
+                if locatorID != None:
+                    label = Label(self, text=locatorID.print_details())
+                    label.pack(pady=10,padx=10)
+
+                button1 = Button(self, text="Back to Home(DELETE)",  #pop up to confirm then redirects page
+                                    command=lambda: controller.show_frame(TripListPage))
+                button1.pack()
+
+                # button2 = Button(self, text="Continue to details page (SAVE)",
+                #                     command=lambda: controller.show_frame(TripDetailsPage))
+                # button2.pack()
+
+    class TripDetailsPage(Frame):
+
+            def __init__(self, parent, controller,locatorID=None):
+                Frame.__init__(self, parent)
+                label = Label(self, text="View list of trip costs here")
+                label.pack(pady=10,padx=10)
+
+                button1 = Button(self, text="(DONE) Back to Home",
+                                    command=lambda: controller.show_frame(TripListPage))
+                button1.pack()
+
+                button2 = Button(self, text="EDIT trip details",
+                                    command=lambda: controller.show_frame(EditTripPage))
+                button2.pack()
+
+                button3 = Button(self, text="ADD new cost",  #pop up asks what kind of cost
+                                    command=lambda: controller.show_frame(EditCostPage))
+                button3.pack()
+
+                button4 = Button(self, text="EDIT existing cost",
+                                    command=lambda: controller.show_frame(EditCostPage))
+                button4.pack()
+
+    class EditCostPage(Frame):
+
+            def __init__(self, parent, controller,locatorID=None):
+                Frame.__init__(self, parent)
+                label = Label(self, text="Edit costs or create new one here")
+                label.pack(pady=10,padx=10)
+
+                button1 = Button(self, text="CANCEL, Back to trip details", ##pop up confirmation then redirects page
+                                    command=lambda: controller.show_frame(TripDetailsPage))
+                button1.pack()
+
+                button2 = Button(self, text="SAVE, Back to trip details",
+                                    command=lambda: controller.show_frame(TripDetailsPage))
+                button2.pack()
+
+
+    filename="pckl_test_file.pkl"
+    choice, vacations=new_or_edit(filename)
+    root = TravelApp()
+    root.geometry('700x400')
+    root.mainloop()
+
+if __name__ == '__main__':
+    main()
+##############################################################################
+
+#left off at line 532,
+#trying to figure out how to pass objects between frames,
+# to choose what data is displayed i need access to which obj the user clicked,
+# currently obj is being recognized at show_frame call but is not being transfered to frame location?
+#i feel like i have locatorID in unessesary locations but keep getting errors if i take it out,
+
+#TODO: get obj to read in new frame from button passed in previous frame.,
