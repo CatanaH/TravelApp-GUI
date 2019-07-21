@@ -501,11 +501,11 @@ def main():
                 frame = self.frames[cont]
                 print("UNDER SHOW FRAME:")
                 print(locatorID)
-                frame.locatorID= locatorID
+                frame.assign_locator(locatorID)
                 frame.tkraise()
 
     class TripListPage(Frame):
-        def __init__(self, parent, controller, locatorID=None):
+        def __init__(self, parent, controller):
             Frame.__init__(self,parent)
 
             try:
@@ -524,14 +524,17 @@ def main():
                                 command=lambda: controller.show_frame(EditTripPage,vacations[0]))
             button.pack()
 
+        def assign_locator(self,locatorID):
+            self.locatorID=locatorID
+            print("inside Main page:") ###why arent these triggering?!!!
+            print(locatorID)
+            print(self.locatorID)
 
     class EditTripPage(Frame):
             def __init__(self, parent, controller,locatorID=None):
                 self.locatorID=locatorID
                 Frame.__init__(self, parent)
-                print("inside Edit trip page:") ###why arent these triggering?!!!
-                print(locatorID)
-                print(self.locatorID)
+
                 # label = Label(self, text="Create or Edit Trip Details Here")
                 # label.pack(pady=10,padx=10)
                 #
@@ -544,6 +547,12 @@ def main():
                 button1 = Button(self, text="Back to Home(DELETE)",  #pop up to confirm then redirects page
                                     command=lambda: controller.show_frame(TripListPage))
                 button1.pack()
+
+            def assign_locator(self,locatorID):
+                self.locatorID=locatorID
+                print("inside Edit trip page:") ###why arent these triggering?!!!
+                print(locatorID)
+                print(self.locatorID)
 
                 # button2 = Button(self, text="Continue to details page (SAVE)",
                 #                     command=lambda: controller.show_frame(TripDetailsPage))
