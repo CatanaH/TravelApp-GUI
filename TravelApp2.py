@@ -136,7 +136,7 @@ class Trip():
         self.approx_date = approx_date
         self.budget = budget
 
-    def print_details(self):
+    def __str__(self):
         ## CLI print format for TripListPage, EditTripPage,TripDetailsPage
         date=''
         for i in self.approx_date:
@@ -293,29 +293,15 @@ def vacay_trips_display(vacations): #prints vacations in a numbered list
     print("--end of Vacations list--\n") #test line/ delete later
 
 def new_or_edit(filename):
-    ##CLI for new or edit trip choices, will be buttons;
-    # get rid of TRY, generate blank page, grey out 'edit' button
-    #maybe split into more try functions so failure further down doesnt break out of the whole 'try'.
     try:
         vacations = load_trip_files(filename)
-        vacations=sort_trips_descending(vacations)####
-        vacay_trips_display(vacations)
-        print("Would you like to create a new trip plan or edit an existing trip plan?")
-        [print("end of options")]
-        choice = input("enter 'new' or 'edit' ")
-        choice=choice.lower()
-        return choice,vacations
-
+        vacations=sort_trips_descending(vacations)
+        return vacations
     except (FileNotFoundError):
         print("No pre-existing trip plans file found")
-        create_new=input("\nwould you like to create a new one? ")
-        if create_new=='quit':
-            return (create_new,None)
-        else:
-            return ('new',None)
-    # except: #,TypeError
-    #     print('Program Error, Contact Administrator')
-        #doesnt keep program running, it still breaks
+        return None
+    except: #,TypeError
+        print('Program Error, Contact Administrator')
 
 
 
@@ -480,137 +466,154 @@ from tkinter import *
 
 def main():
     class TravelApp(Tk):
-            def __init__(self, *args, **kwargs):
-                Tk.__init__(self, *args, **kwargs)
+        def __init__(self, *args, **kwargs):
+            Tk.__init__(self, *args, **kwargs)
 
-                container = Frame(self)
-                container.pack(side="top", fill="both", expand = True)
-                container.grid_rowconfigure(0, weight=1)
-                container.grid_columnconfigure(0, weight=1)
+            self.container = Frame(self)
+            self.container.pack(side="top", fill="both", expand = True)
+            self.container.grid_rowconfigure(0, weight=1)
+            self.container.grid_columnconfigure(0, weight=1)
 
+            self.frames = {}
+            for F in (TripListPage,EditTripPage,TripDetailsPage, EditCostPage): # EditTripPage,TripDetailsPage, EditCostPage
+                frame = F(self.container, self)
+                self.frames[F] = frame
+                frame.grid(row=0, column=0, sticky="nsew")
 
-                self.frames = {}
-                for F in (TripListPage, EditTripPage,TripDetailsPage, EditCostPage):
-                    frame = F(container, self)
-                    self.frames[F] = frame
-                    frame.grid(row=0, column=0, sticky="nsew")
+            self.show_frame(TripListPage)
 
-                self.show_frame(TripListPage,vacations[0])
+        def show_frame(self, cont, locatorID=None):
+            frame = self.frames[cont]
+            print("UNDER SHOW FRAME:") #testing
+            print(locatorID) #testing
+            frame.tkraise()
 
-            def show_frame(self, cont, locatorID=None):
-                frame = self.frames[cont]
-                print("UNDER SHOW FRAME:")
-                print(locatorID)
-                frame.assign_locator(locatorID)
-                frame.tkraise()
+        def refresh_show_frame(self,cont,locatorID=None):
+            self.refresh_frame(cont, locatorID)
+            self.show_frame(cont)
+            print("END refresh_show_frame") #testing
+
+        def refresh_frame(self,cont, locatorID=None):
+            print("start refresh") #testing
+            frame = self.frames[cont]
+            frame.destroy()
+            frame = cont(self.container, self, locatorID)
+            self.frames[cont] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
+            print("REfresh done") #testing
+            print(locatorID) #testing
+
 
     class TripListPage(Frame):
-        def __init__(self, parent, controller):
+        def __init__(self, parent, controller,locatorID=None):
             Frame.__init__(self,parent)
 
-            try:
-                for trip in vacations:
-                    label = Label(self, text=trip.print_details())
-                    label.pack(pady=10,padx=10)
-                    button2 = Button(self, text="EDIT existing trip",
-                            command=lambda: controller.show_frame(EditTripPage,locatorID=trip))
-                    button2.pack()
-                    #TODO: edit button should redirect to specific TripDetailsPage
-            except TypeError:
-                #currently displays blank page with ADD button active
-                pass
-
             button = Button(self, text="ADD a new trip",
-                                command=lambda: controller.show_frame(EditTripPage,vacations[0]))
-            button.pack()
+                                command=lambda: controller.refresh_show_frame(EditTripPage)) #testing, no set to correct destination temp.
+            button.grid(row=0,column=0)
 
-        def assign_locator(self,locatorID):
-            self.locatorID=locatorID
-            print("inside Main page:") ###why arent these triggering?!!!
-            print(locatorID)
-            print(self.locatorID)
+            try:
+                for n, trip in enumerate(vacations):
+                    label = Label(self, text=trip.__str__())
+                    label.grid(row=(n+1),column=0,sticky='W')
+                    button2 = Button(self, text="EDIT existing trip",
+                            command=lambda trip=trip: controller.refresh_show_frame(TripDetailsPage,locatorID=trip))
+                    button2.grid(row=(n+1),column=1)
+            except TypeError:
+                pass ## TODO: add label saying no vacays, click add to et started
+
 
     class EditTripPage(Frame):
-            def __init__(self, parent, controller,locatorID=None):
-                self.locatorID=locatorID
-                Frame.__init__(self, parent)
+        def __init__(self, parent, controller,locatorID=None):
+            Frame.__init__(self, parent)
+            ## func create new trip should work here
+                # trip_list=create_vacaylist_for_save(vacations,trip,choice)
+                # save_trip_list(trip_list,filename)
+            label = Label(self, text="Create or Edit Trip Details Here")
+            label.grid(row=0,column=0)
+            ## TODO: add edit features and save
+            if locatorID != None:
+                label = Label(self, text=locatorID.__str__())
+                label.grid(row=1,column=0)
 
-                # label = Label(self, text="Create or Edit Trip Details Here")
-                # label.pack(pady=10,padx=10)
-                #
-                # label = Label(self, text=locatorID.print_details())
-                # label.pack(pady=10,padx=10)
-                if locatorID != None:
-                    label = Label(self, text=locatorID.print_details())
-                    label.pack(pady=10,padx=10)
+            button1 = Button(self, text="Back to Home(DELETE)",  #pop up to confirm then redirects page
+                        command=lambda: controller.refresh_show_frame(TripListPage))
+            button1.grid(row=4,column=0)
+            button2 = Button(self, text="SAVE, continue to trip details",
+                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
+            button2.grid(row=4,column=1)
 
-                button1 = Button(self, text="Back to Home(DELETE)",  #pop up to confirm then redirects page
-                                    command=lambda: controller.show_frame(TripListPage))
-                button1.pack()
+            ####################### entries################
+            trip_name__label = Label(self, font=('arial',12),text='Trip Destination:')
+            trip_name__label.grid(row=1)
+            trip_name_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2)
+            trip_name_entry.grid(row=1,column=1)
 
-            def assign_locator(self,locatorID):
-                self.locatorID=locatorID
-                print("inside Edit trip page:") ###why arent these triggering?!!!
-                print(locatorID)
-                print(self.locatorID)
+            trip_name__label = Label(self, font=('arial',12),text='Start Date mmm/yr:')
+            trip_name__label.grid(row=2)
+            start_date_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2)
+            start_date_entry.grid(row=2,column=1)
 
-                # button2 = Button(self, text="Continue to details page (SAVE)",
-                #                     command=lambda: controller.show_frame(TripDetailsPage))
-                # button2.pack()
+            trip_name__label = Label(self, font=('arial',12),text='Budget Total:   $')
+            trip_name__label.grid(row=3, sticky="E")
+            budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2)
+            budget_entry.grid(row=3,column=1)
+
+
 
     class TripDetailsPage(Frame):
+        def __init__(self, parent, controller,locatorID=None):
+            Frame.__init__(self, parent)
 
-            def __init__(self, parent, controller,locatorID=None):
-                Frame.__init__(self, parent)
-                label = Label(self, text="View list of trip costs here")
-                label.pack(pady=10,padx=10)
+            label = Label(self, text="View list of trip costs here:")
+            label.grid()
+            if locatorID != None:
+                for n,cost in enumerate(locatorID.trip_plans):
+                    label = Label(self, text=cost.__str__()) ## TODO: add more print details
+                    label.grid(row=(1+n),column=0)
+                    button4 = Button(self, text="EDIT existing cost",
+                                command=lambda: controller.refresh_show_frame(EditCostPage,locatorID=locatorID))
+                    button4.grid(row=(1+n),column=1)
 
-                button1 = Button(self, text="(DONE) Back to Home",
-                                    command=lambda: controller.show_frame(TripListPage))
-                button1.pack()
+            button1 = Button(self, text="Back to Home(DONE)",  #pop up to confirm then redirects page
+                            command=lambda: controller.refresh_show_frame(TripListPage))
+            button1.grid(row=0,column=3)
+            button2 = Button(self, text="EDIT trip details",
+                            command=lambda: controller.refresh_show_frame(EditTripPage,locatorID=locatorID))
+            button2.grid(row=1,column=3)
+            button3 = Button(self, text="ADD new cost",  #pop up asks what kind of cost
+                            command=lambda: controller.refresh_show_frame(EditCostPage,locatorID=locatorID))
+            button3.grid(row=2,column=3)
 
-                button2 = Button(self, text="EDIT trip details",
-                                    command=lambda: controller.show_frame(EditTripPage))
-                button2.pack()
-
-                button3 = Button(self, text="ADD new cost",  #pop up asks what kind of cost
-                                    command=lambda: controller.show_frame(EditCostPage))
-                button3.pack()
-
-                button4 = Button(self, text="EDIT existing cost",
-                                    command=lambda: controller.show_frame(EditCostPage))
-                button4.pack()
 
     class EditCostPage(Frame):
+        def __init__(self, parent, controller,locatorID=None):
+            Frame.__init__(self, parent)
+            label = Label(self, text="Edit costs or create new one here")
+            label.grid()
 
-            def __init__(self, parent, controller,locatorID=None):
-                Frame.__init__(self, parent)
-                label = Label(self, text="Edit costs or create new one here")
-                label.pack(pady=10,padx=10)
-
-                button1 = Button(self, text="CANCEL, Back to trip details", ##pop up confirmation then redirects page
-                                    command=lambda: controller.show_frame(TripDetailsPage))
-                button1.pack()
-
-                button2 = Button(self, text="SAVE, Back to trip details",
-                                    command=lambda: controller.show_frame(TripDetailsPage))
-                button2.pack()
+            button1 = Button(self, text="CANCEL/DELETE, Back to trip details", ##pop up confirmation then redirects page
+                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
+            button1.grid(row=1,column=0)
+            button2 = Button(self, text="SAVE, Back to trip details",
+                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
+            button2.grid(row=1,column=1)
 
 
-    filename="pckl_test_file.pkl"
-    choice, vacations=new_or_edit(filename)
+    filename="pck4_test_file.pkl"
+    vacations=new_or_edit(filename)
     root = TravelApp()
-    root.geometry('700x400')
+    # root.geometry('500x600') #window is auto sizing, this isnt currently needed
     root.mainloop()
 
 if __name__ == '__main__':
     main()
 ##############################################################################
 
-#left off at line 532,
-#trying to figure out how to pass objects between frames,
-# to choose what data is displayed i need access to which obj the user clicked,
-# currently obj is being recognized at show_frame call but is not being transfered to frame location?
-#i feel like i have locatorID in unessesary locations but keep getting errors if i take it out,
 
-#TODO: get obj to read in new frame from button passed in previous frame.,
+
+
+
+#TODO: #currently on EditTripPage, entry boxes, need to tie input to actual program logic
+
+ #add entry boxes that have info populated like in CLI version, so data can be altered, then figure out how to save that data
