@@ -304,11 +304,10 @@ def new_or_edit(filename):
         print('Program Error, Contact Administrator')
 
 
-
-def create_new_trip():
-    trip=Trip()
-    trip.update_trip_title()
-    return trip
+# def create_new_trip():
+#     trip=Trip()
+#     trip.update_trip_title()
+#     return trip
 
 def create_edit_trip(choice,vacations):
     ##CLI frame TripListPage, create edit buttons next to each trip summary
@@ -461,8 +460,43 @@ def save_trip_list(trip_list, filename):
         except:
             print('other error')
 
+
+
 ############################# tkinter stuff ###################################
 from tkinter import *
+
+
+class DateEntry(Frame):
+    def __init__(self, master):
+        Frame.__init__(self, master)
+
+        mon_date = StringVar()
+        day_date = StringVar()
+        year_date = StringVar()
+        limit_entry(mon_date,3)
+        limit_entry(day_date,2)
+        limit_entry(year_date,2)
+
+
+        self.entry_1 = Entry(self,font=('arial',14),bd=2,insertwidth=2, width=3,textvariable=mon_date) #month
+        self.label_1 = Label(self, text='/')
+        self.entry_2 = Entry(self, font=('arial',14),bd=2,insertwidth=2,width=2,textvariable=day_date) #day
+        self.label_2 = Label(self, text='/')
+        self.entry_3 = Entry(self, font=('arial',14),bd=2,insertwidth=2,width=2,textvariable=year_date) #year
+
+        self.entry_1.pack(side=LEFT)
+        self.label_1.pack(side=LEFT)
+        self.entry_2.pack(side=LEFT)
+        self.label_2.pack(side=LEFT)
+        self.entry_3.pack(side=LEFT)
+
+
+def limit_entry(str_var,length):
+    def callback(str_var):
+        c = str_var.get()[0:length]
+        str_var.set(c)
+    str_var.trace("w", lambda name, index, mode, str_var=str_var: callback(str_var))
+
 
 def main():
     class TravelApp(Tk):
@@ -529,6 +563,21 @@ def main():
             ## func create new trip should work here
                 # trip_list=create_vacaylist_for_save(vacations,trip,choice)
                 # save_trip_list(trip_list,filename)
+            if locatorID == None: #307
+                trip=Trip()
+                # trip.update_trip_title()
+                # trip.destination = trip_name_var
+                # trip.approx_date = start_date_var
+                # trip.budget = budget_var
+
+            else:
+                pass #logic for reading existing obj details
+
+            trip_name_var=StringVar() #set to read in prev info
+            start_date_var=StringVar()
+            budget_var=IntVar()
+            test_answer=StringVar()
+
             label = Label(self, text="Create or Edit Trip Details Here")
             label.grid(row=0,column=0)
             ## TODO: add edit features and save
@@ -545,20 +594,35 @@ def main():
 
             ####################### entries################
             trip_name__label = Label(self, font=('arial',12),text='Trip Destination:')
-            trip_name__label.grid(row=1)
-            trip_name_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2)
+            trip_name__label.grid(row=1, sticky="E")
+            trip_name_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=trip_name_var)
             trip_name_entry.grid(row=1,column=1)
 
-            trip_name__label = Label(self, font=('arial',12),text='Start Date mmm/yr:')
-            trip_name__label.grid(row=2)
-            start_date_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2)
+            start_date_label = Label(self, font=('arial',12),text='Start Date mmm/yr:')
+            start_date_label.grid(row=2, sticky="E")
+            start_date_entry = DateEntry(self)
             start_date_entry.grid(row=2,column=1)
 
-            trip_name__label = Label(self, font=('arial',12),text='Budget Total:   $')
-            trip_name__label.grid(row=3, sticky="E")
-            budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2)
+            budget_label = Label(self, font=('arial',12),text='Budget Total:')
+            budget_label.grid(row=3, sticky="E")
+            budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=budget_var)
             budget_entry.grid(row=3,column=1)
+            # budget_entry.insert(0,'$ ') ## TODO: displays $ disapears when typing, change to greyed out one that stays?
 
+
+
+
+            ### test
+            def test():
+                try:
+                    test_answer.set(trip_name_var.get())
+                except:
+                    error_msg('Error')
+            btn_plus = Button(self, text='+', width=9, command= lambda: test())
+            btn_plus.grid(row=5,column=0)
+            budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=test_answer)
+            budget_entry.grid(row=5,column=1)
+            ### test
 
 
     class TripDetailsPage(Frame):
@@ -600,7 +664,7 @@ def main():
             button2.grid(row=1,column=1)
 
 
-    filename="pck4_test_file.pkl"
+    filename="pckl_test_file.pkl"
     vacations=new_or_edit(filename)
     root = TravelApp()
     # root.geometry('500x600') #window is auto sizing, this isnt currently needed
