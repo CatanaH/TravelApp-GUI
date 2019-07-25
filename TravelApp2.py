@@ -139,53 +139,20 @@ class Trip():
     def __str__(self):
         ## CLI print format for TripListPage, EditTripPage,TripDetailsPage
         date=''
-        for i in self.approx_date:
-            date += (i+' ')
+        # for i in self.approx_date:
+        #     date += (i+' ')
         return self.destination + ' - '+ date # +"budget: "+str(self.budget)
 
-    def update_trip_title(self):
-        ## CLI frame for EditTripPage
-        edit_lst=[]
-        for i in [(self.destination,'Trip Destination'),(self.approx_date,'Approximate Date'),(self.budget,'Budget')]:
-            print("{} = {}".format(i[1],i[0]))
-            while True:
+    def update_trip_title(self,tripname,date, budget):
+        self.destination = tripname
+        self.approx_date = date
+        try: #must be number for later maths
+            edited_ans=float(budget)
+            self.budget = budget
+        except:
+            print("Budget must be integer")
 
-                edited_ans=input("type new info or 'enter' to skip ")
-                if edited_ans =='' and i[0]!='':#only if prenamed and not changing
-                    edit_lst.append(i[0])
-                    break
-                elif edited_ans!='': #only runs if an answer is typed
-                    if i[1]=='Trip Destination': #verifies correct name for trip
-                        appr_name=input("Is this correct? "+edited_ans+" ")
-                        if appr_name.lower()[0]=='y':
-                            edit_lst.append(edited_ans)
-                            break
-                    elif i[1]=='Approximate Date':
-                        print("date running")
-                        approx_date=edited_ans.split('/') #split into [month,yy] for later manipulation
-                        if len(approx_date)==2:
-                            print("date length qualified")
-                            edit_lst.append(approx_date)
-                            break
-                        else:
-                            print("date must be in 'month/yy' format or 'None'")
-                            continue
-                    elif i[1]=='Budget':
-                        try: #must be number for later maths
-                            edited_ans=int(edited_ans)
-                            edit_lst.append(edited_ans)
-                            break
-                        except:
-                            print("Budget must be integer")
-                            continue
 
-        if len(edit_lst) ==3:
-            self.destination = edit_lst[0]
-            self.approx_date = edit_lst[1]
-            self.budget = edit_lst[2]
-            print("All updated")
-        else:
-            print("error, could not update")
 
     def trip_total_price(self):
         #loops to grab price int and add them together
@@ -308,6 +275,19 @@ def new_or_edit(filename):
 #     trip=Trip()
 #     trip.update_trip_title()
 #     return trip
+def save_trip(controller,locatorID,tripName,date,budget):
+    try: #makes sure all data is proper then redirects, except catches errors and does popups
+        if locatorID == None: #to create a new trip obj
+            trip=Trip()
+            trip.update_trip_title(tripName,date,budget)
+            locatorID=trip #provides new locator ID to work with
+        else:
+            trip.update_trip_title(tripName,date,budget)
+        print(trip)
+        controller #.refresh_show_frame(TripDetailsPage,locatorID=locatorID) ## TODO: get redirect to work all from clicking save button
+        print("end control")
+    except: #include specific errors and trigger popups
+        pass
 
 def create_edit_trip(choice,vacations):
     ##CLI frame TripListPage, create edit buttons next to each trip summary
@@ -470,25 +450,24 @@ class DateEntry(Frame):
     def __init__(self, master):
         Frame.__init__(self, master)
 
-        mon_date = StringVar()
-        day_date = StringVar()
-        year_date = StringVar()
-        limit_entry(mon_date,3)
-        limit_entry(day_date,2)
-        limit_entry(year_date,2)
+        self.mon_date = StringVar()
+        self.day_date = StringVar()
+        self.year_date = StringVar()
+        limit_entry(self.mon_date,3)
+        limit_entry(self.day_date,2)
+        limit_entry(self.year_date,2)
 
+        self.mon_date_entry = Entry(self,font=('arial',14),bd=2,insertwidth=2, width=3,textvariable=self.mon_date) #month
+        self.date_slash_1 = Label(self, text='/')
+        self.day_date_entry = Entry(self, font=('arial',14),bd=2,insertwidth=2,width=2,textvariable=self.day_date) #day
+        self.date_slash_2 = Label(self, text='/')
+        self.year_date_entry = Entry(self, font=('arial',14),bd=2,insertwidth=2,width=2,textvariable=self.year_date) #year
 
-        self.entry_1 = Entry(self,font=('arial',14),bd=2,insertwidth=2, width=3,textvariable=mon_date) #month
-        self.label_1 = Label(self, text='/')
-        self.entry_2 = Entry(self, font=('arial',14),bd=2,insertwidth=2,width=2,textvariable=day_date) #day
-        self.label_2 = Label(self, text='/')
-        self.entry_3 = Entry(self, font=('arial',14),bd=2,insertwidth=2,width=2,textvariable=year_date) #year
-
-        self.entry_1.pack(side=LEFT)
-        self.label_1.pack(side=LEFT)
-        self.entry_2.pack(side=LEFT)
-        self.label_2.pack(side=LEFT)
-        self.entry_3.pack(side=LEFT)
+        self.mon_date_entry.pack(side=LEFT)
+        self.date_slash_1.pack(side=LEFT)
+        self.day_date_entry.pack(side=LEFT)
+        self.date_slash_2.pack(side=LEFT)
+        self.year_date_entry.pack(side=LEFT)
 
 
 def limit_entry(str_var,length):
@@ -523,6 +502,7 @@ def main():
             frame.tkraise()
 
         def refresh_show_frame(self,cont,locatorID=None):
+            print("start refresh")
             self.refresh_frame(cont, locatorID)
             self.show_frame(cont)
             print("END refresh_show_frame") #testing
@@ -560,18 +540,13 @@ def main():
     class EditTripPage(Frame):
         def __init__(self, parent, controller,locatorID=None):
             Frame.__init__(self, parent)
-            ## func create new trip should work here
-                # trip_list=create_vacaylist_for_save(vacations,trip,choice)
-                # save_trip_list(trip_list,filename)
-            if locatorID == None: #307
-                trip=Trip()
-                # trip.update_trip_title()
-                # trip.destination = trip_name_var
-                # trip.approx_date = start_date_var
-                # trip.budget = budget_var
 
-            else:
-                pass #logic for reading existing obj details
+            # if locatorID == None:## func create new trip should work here
+            #     trip=Trip()
+            #     trip.update_trip_title(trip_name_var.get(),start_date_var.get(),budget_var.get())#feed in entry answers
+            #
+            print("controller:")
+            print(controller)
 
             trip_name_var=StringVar() #set to read in prev info
             start_date_var=StringVar()
@@ -589,16 +564,19 @@ def main():
                         command=lambda: controller.refresh_show_frame(TripListPage))
             button1.grid(row=4,column=0)
             button2 = Button(self, text="SAVE, continue to trip details",
-                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
+                            command=lambda: save_trip(controller=(controller.refresh_show_frame(TripDetailsPage,locatorID)),locatorID,trip_name_var.get(),start_date_var.get(),budget_var.get()))
             button2.grid(row=4,column=1)
+            # trip_list=create_vacaylist_for_save(vacations,trip,choice)
+            # save_trip_list(trip_list,filename)
 
             ####################### entries################
-            trip_name__label = Label(self, font=('arial',12),text='Trip Destination:')
-            trip_name__label.grid(row=1, sticky="E")
+            trip_name_label = Label(self, font=('arial',12),text='Trip Destination:')
+            trip_name_label.grid(row=1, sticky="E")
             trip_name_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=trip_name_var)
             trip_name_entry.grid(row=1,column=1)
+            # TODO: budget_entry.insert(0,'$ ') use this to plug in prev answers
 
-            start_date_label = Label(self, font=('arial',12),text='Start Date mmm/yr:')
+            start_date_label = Label(self, font=('arial',12),text='Start Date mmm/dd/yr:')
             start_date_label.grid(row=2, sticky="E")
             start_date_entry = DateEntry(self)
             start_date_entry.grid(row=2,column=1)
@@ -608,21 +586,27 @@ def main():
             budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=budget_var)
             budget_entry.grid(row=3,column=1)
             # budget_entry.insert(0,'$ ') ## TODO: displays $ disapears when typing, change to greyed out one that stays?
+            if locatorID != None:
+                trip_name_entry.insert(0,locatorID.destination)
+                start_date_entry.mon_date_entry.insert(0,'MMM')
+                start_date_entry.day_date_entry.insert(0,'DD')
+                start_date_entry.year_date_entry.insert(0,'YY')# TODO: fix this to read from trip class
+                budget_entry.insert(0,locatorID.budget)
+                ## TODO: add if statement to catch NONE
 
 
 
-
-            ### test
-            def test():
-                try:
-                    test_answer.set(trip_name_var.get())
-                except:
-                    error_msg('Error')
-            btn_plus = Button(self, text='+', width=9, command= lambda: test())
-            btn_plus.grid(row=5,column=0)
-            budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=test_answer)
-            budget_entry.grid(row=5,column=1)
-            ### test
+            # ### test
+            # def test():
+            #     try:
+            #         test_answer.set(trip_name_var.get())
+            #     except:
+            #         error_msg('Error')
+            # btn_plus = Button(self, text='+', width=9, command= lambda: test())
+            # btn_plus.grid(row=5,column=0)
+            # budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=test_answer)
+            # budget_entry.grid(row=5,column=1)
+            # ### test
 
 
     class TripDetailsPage(Frame):
@@ -676,8 +660,5 @@ if __name__ == '__main__':
 
 
 
-
-
-#TODO: #currently on EditTripPage, entry boxes, need to tie input to actual program logic
-
- #add entry boxes that have info populated like in CLI version, so data can be altered, then figure out how to save that data
+#TODO: #287 trying to get save button in edit trip page to save entries and redirect to TripDetailsPage
+#I think i got the logic for reading and creating trip, but stuck on page redirect via another func
