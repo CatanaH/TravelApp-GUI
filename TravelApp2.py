@@ -275,7 +275,7 @@ def new_or_edit(filename):
 #     trip=Trip()
 #     trip.update_trip_title()
 #     return trip
-def save_trip(controller,locatorID,tripName,date,budget):
+def save_trip(locatorID,tripName,date,budget,controller=None):
     try: #makes sure all data is proper then redirects, except catches errors and does popups
         if locatorID == None: #to create a new trip obj
             trip=Trip()
@@ -283,11 +283,14 @@ def save_trip(controller,locatorID,tripName,date,budget):
             locatorID=trip #provides new locator ID to work with
         else:
             trip.update_trip_title(tripName,date,budget)
-        print(trip)
-        controller #.refresh_show_frame(TripDetailsPage,locatorID=locatorID) ## TODO: get redirect to work all from clicking save button
-        print("end control")
-    except: #include specific errors and trigger popups
+        # print(trip)
+        print(vacations)
+        # create_vacaylist_for_save(vacations,locatorID)
+        # controller #.refresh_show_frame(TripDetailsPage,locatorID=locatorID) ## TODO: get redirect to work all from clicking save button
+        # print("end control")
+    except TabError: #include specific errors and trigger popups (TabError for test, delete later)
         pass
+
 
 def create_edit_trip(choice,vacations):
     ##CLI frame TripListPage, create edit buttons next to each trip summary
@@ -386,7 +389,7 @@ def create_edit_trip(choice,vacations):
     return (trip,trip_num)
 
 
-def create_vacaylist_for_save(vacations,trip,choice,trip_num=None):
+def create_vacaylist_for_save(vacations,trip,choice=None,trip_num=None):
 ###### this is for saving trip
     if vacations == None:
         print("creating new triplist")
@@ -439,7 +442,6 @@ def save_trip_list(trip_list, filename):
             print('Cannot Save Trip, Error')
         except:
             print('other error')
-
 
 
 ############################# tkinter stuff ###################################
@@ -495,27 +497,27 @@ def main():
 
             self.show_frame(TripListPage)
 
-        def show_frame(self, cont, locatorID=None):
+        def show_frame(self, cont):
             frame = self.frames[cont]
-            print("UNDER SHOW FRAME:") #testing
-            print(locatorID) #testing
+            # print("UNDER SHOW FRAME:") #testing
+            # print(locatorID) #testing
             frame.tkraise()
 
         def refresh_show_frame(self,cont,locatorID=None):
-            print("start refresh")
+            # print("start refresh")
             self.refresh_frame(cont, locatorID)
             self.show_frame(cont)
-            print("END refresh_show_frame") #testing
+            # print("END refresh_show_frame") #testing
 
         def refresh_frame(self,cont, locatorID=None):
-            print("start refresh") #testing
+            # print("start refresh") #testing
             frame = self.frames[cont]
             frame.destroy()
             frame = cont(self.container, self, locatorID)
             self.frames[cont] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-            print("REfresh done") #testing
-            print(locatorID) #testing
+            # print("REfresh done") #testing
+            # print(locatorID) #testing
 
 
     class TripListPage(Frame):
@@ -545,10 +547,7 @@ def main():
             #     trip=Trip()
             #     trip.update_trip_title(trip_name_var.get(),start_date_var.get(),budget_var.get())#feed in entry answers
             #
-            print("controller:")
-            print(controller)
-
-            trip_name_var=StringVar() #set to read in prev info
+            trip_name_var=StringVar()
             start_date_var=StringVar()
             budget_var=IntVar()
             test_answer=StringVar()
@@ -563,8 +562,11 @@ def main():
             button1 = Button(self, text="Back to Home(DELETE)",  #pop up to confirm then redirects page
                         command=lambda: controller.refresh_show_frame(TripListPage))
             button1.grid(row=4,column=0)
-            button2 = Button(self, text="SAVE, continue to trip details",
-                            command=lambda: save_trip(controller=(controller.refresh_show_frame(TripDetailsPage,locatorID)),locatorID,trip_name_var.get(),start_date_var.get(),budget_var.get()))
+
+
+
+            button2 = Button(self, text="SAVE, continue to trip details", ## TODO: create check that requires trip title for save button to work
+                        command=lambda:[controller.refresh_show_frame(TripDetailsPage,locatorID),save_trip(locatorID,trip_name_var.get(),start_date_var.get(),budget_var.get())])
             button2.grid(row=4,column=1)
             # trip_list=create_vacaylist_for_save(vacations,trip,choice)
             # save_trip_list(trip_list,filename)
@@ -574,7 +576,6 @@ def main():
             trip_name_label.grid(row=1, sticky="E")
             trip_name_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=trip_name_var)
             trip_name_entry.grid(row=1,column=1)
-            # TODO: budget_entry.insert(0,'$ ') use this to plug in prev answers
 
             start_date_label = Label(self, font=('arial',12),text='Start Date mmm/dd/yr:')
             start_date_label.grid(row=2, sticky="E")
@@ -588,25 +589,13 @@ def main():
             # budget_entry.insert(0,'$ ') ## TODO: displays $ disapears when typing, change to greyed out one that stays?
             if locatorID != None:
                 trip_name_entry.insert(0,locatorID.destination)
-                start_date_entry.mon_date_entry.insert(0,'MMM')
-                start_date_entry.day_date_entry.insert(0,'DD')
-                start_date_entry.year_date_entry.insert(0,'YY')# TODO: fix this to read from trip class
-                budget_entry.insert(0,locatorID.budget)
+                #start_date_entry.mon_date_entry.insert(0,'MMM')
+                #start_date_entry.day_date_entry.insert(0,'DD')
+                #start_date_entry.year_date_entry.insert(0,'YY')# TODO: fix this to read from trip class
+                #budget_entry.insert(0,locatorID.budget)
                 ## TODO: add if statement to catch NONE
 
 
-
-            # ### test
-            # def test():
-            #     try:
-            #         test_answer.set(trip_name_var.get())
-            #     except:
-            #         error_msg('Error')
-            # btn_plus = Button(self, text='+', width=9, command= lambda: test())
-            # btn_plus.grid(row=5,column=0)
-            # budget_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=test_answer)
-            # budget_entry.grid(row=5,column=1)
-            # ### test
 
 
     class TripDetailsPage(Frame):
@@ -649,6 +638,7 @@ def main():
 
 
     filename="pckl_test_file.pkl"
+    global vacations #only need because gui is inside main() and functions arent, can probably merge all later
     vacations=new_or_edit(filename)
     root = TravelApp()
     # root.geometry('500x600') #window is auto sizing, this isnt currently needed
@@ -660,5 +650,13 @@ if __name__ == '__main__':
 
 
 
-#TODO: #287 trying to get save button in edit trip page to save entries and redirect to TripDetailsPage
-#I think i got the logic for reading and creating trip, but stuck on page redirect via another func
+#TODO: pkl file should actually save every time save is clicked.
+# could prob work with original file and append like for create_vacaylist_for_save,
+# not re-read it everytime but at least save it and use that file.
+# so, 'r' file only once at app open, save at every 'save' click, just keep editing
+# trip_list as you go, so if program is closed by [X] nothing is lost...
+
+#otherwise have to build in pop up to verify close and save that is linked into base .destroy logic of tkinter
+
+
+# commit: save button to save to file, check for input,;create obj and redirects to new page

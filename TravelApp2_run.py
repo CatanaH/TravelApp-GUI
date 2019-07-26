@@ -8,7 +8,7 @@ while True:
 
     print("you chose to: "+choice)
 
-    #need to check weather new or edit func
+    #need to check whether new or edit func
     if choice.lower() == 'new':
         trip= create_new_trip()
         print("new trip created")
