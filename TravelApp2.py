@@ -1,4 +1,5 @@
 import pickle
+filename="pckl_test_file.pkl"
 '''
 travel app; 'Transport','Lodging','Event','Meal','Merchandise','Fee'
 use classes to sort and organize and call data as needed
@@ -276,18 +277,18 @@ def new_or_edit(filename):
 #     trip.update_trip_title()
 #     return trip
 def save_trip(locatorID,tripName,date,budget,controller=None):
-    try: #makes sure all data is proper then redirects, except catches errors and does popups
+    try: #makes sure all data is proper then redirects; except catches errors and does popups
         if locatorID == None: #to create a new trip obj
             trip=Trip()
             trip.update_trip_title(tripName,date,budget)
             locatorID=trip #provides new locator ID to work with
         else:
-            trip.update_trip_title(tripName,date,budget)
+            locatorID.update_trip_title(tripName,date,budget)
         # print(trip)
         print(vacations)
-        # create_vacaylist_for_save(vacations,locatorID)
-        # controller #.refresh_show_frame(TripDetailsPage,locatorID=locatorID) ## TODO: get redirect to work all from clicking save button
-        # print("end control")
+        create_vacaylist_for_save(vacations,locatorID)
+        # save_trip_list(vacations,filename)  #comment outwhile testing to prevent bad data saves
+
     except TabError: #include specific errors and trigger popups (TabError for test, delete later)
         pass
 
@@ -389,40 +390,32 @@ def create_edit_trip(choice,vacations):
     return (trip,trip_num)
 
 
-def create_vacaylist_for_save(vacations,trip,choice=None,trip_num=None):
+def create_vacaylist_for_save(vacations,locatorID,choice=None,trip_num=None):
 ###### this is for saving trip
     if vacations == None:
         print("creating new triplist")
-        trip_list=[trip,]
-
-    elif choice == 'edit':
-        #should have prior writen logic to index trip to be edited, use same here
-        print("indexing to overwrite trip")
-        vacations[trip_num]=trip
-        trip_list=vacations
-
-    elif choice == 'new':
-        try: #if list has any Nonetype objects remove them
+        vacations=[trip,]
+    elif locatorID in vacations:
+        #dont need to rewirte list, obj already references whats been edited
+        pass
+    elif locatorID not in vacations:
+        try:
             print("adds new trip to end of trip list")
-            trip_list=vacations
-            trip_list.append(trip)
-            for i in trip_list:
-                if i == None:
-                    trip_list.pop(trip_list.index(i))
-        except AttributeError: #if vacations is only one item, convert to list
+            vacations.append(locatorID)
+            # for i in vacations:   #if list has any Nonetype objects remove them
+            #     if i == None:
+            #         vacations.pop(vacations.index(i))
+        except AttributeError: #if vacations is only one item, convert to list to prevent nested lists
+            #only had this problem in the begining, prob dont need anymore
             print("adds new trip and creates triplist")
-            trip_list=[vacations,]
-            trip_list.append(trip)
-
-    elif choice == 'quit' or choice == 'done':
-        return None
-
+            vacations=[vacations,]
+            vacations.append(locatorID)
     else:
         print('Failure adding item to vacations list\n')
         return None #to avoid breaking if this clause runs
 
-    # vacay_trips_display(trip_list)
-    return trip_list  #Comment out when testing to avoid saving changes
+    # return trip_list  ###vacations is global, shouldnt have to return to
+    #save trip to put into save_trip_list. should be able to just call it
 
 
 def save_trip_list(trip_list, filename):
@@ -543,18 +536,13 @@ def main():
         def __init__(self, parent, controller,locatorID=None):
             Frame.__init__(self, parent)
 
-            # if locatorID == None:## func create new trip should work here
-            #     trip=Trip()
-            #     trip.update_trip_title(trip_name_var.get(),start_date_var.get(),budget_var.get())#feed in entry answers
-            #
             trip_name_var=StringVar()
             start_date_var=StringVar()
-            budget_var=IntVar()
-            test_answer=StringVar()
+            budget_var=StringVar() #when intvar, breaks if char
+
 
             label = Label(self, text="Create or Edit Trip Details Here")
             label.grid(row=0,column=0)
-            ## TODO: add edit features and save
             if locatorID != None:
                 label = Label(self, text=locatorID.__str__())
                 label.grid(row=1,column=0)
@@ -564,18 +552,27 @@ def main():
             button1.grid(row=4,column=0)
 
 
-
-            button2 = Button(self, text="SAVE, continue to trip details", ## TODO: create check that requires trip title for save button to work
-                        command=lambda:[controller.refresh_show_frame(TripDetailsPage,locatorID),save_trip(locatorID,trip_name_var.get(),start_date_var.get(),budget_var.get())])
+            button2 = Button(self, text="SAVE, continue to trip details", state='disabled', ## TODO: create check that requires trip title for save button to work
+                        command=lambda:[save_trip(locatorID,trip_name_var.get(),start_date_var.get(),budget_var.get()),controller.refresh_show_frame(TripDetailsPage,locatorID)])
             button2.grid(row=4,column=1)
-            # trip_list=create_vacaylist_for_save(vacations,trip,choice)
-            # save_trip_list(trip_list,filename)
 
+            def savebtn_active(event):
+                if event.keysym == 'BackSpace': #reads count before button press, had to add this to count right
+                    length=len(trip_name_var.get())-1
+                else: #currently counting any button, including 'shift' as input len
+                    length=len(trip_name_var.get())+1
+                if length<2: #set to 2 for things like 'AZ'
+                    button2.config(state='disabled')
+                else:
+                    button2.config(state='active')
             ####################### entries################
             trip_name_label = Label(self, font=('arial',12),text='Trip Destination:')
             trip_name_label.grid(row=1, sticky="E")
             trip_name_entry = Entry(self, font=('arial',14),width=20, bd=2,insertwidth=2, textvariable=trip_name_var)
+            trip_name_entry.bind('<Key>',savebtn_active, add='+')
+            trip_name_entry.bind('<Delete>',savebtn_active, add='+')
             trip_name_entry.grid(row=1,column=1)
+
 
             start_date_label = Label(self, font=('arial',12),text='Start Date mmm/dd/yr:')
             start_date_label.grid(row=2, sticky="E")
@@ -588,14 +585,18 @@ def main():
             budget_entry.grid(row=3,column=1)
             # budget_entry.insert(0,'$ ') ## TODO: displays $ disapears when typing, change to greyed out one that stays?
             if locatorID != None:
+                button2.config(state='active')
                 trip_name_entry.insert(0,locatorID.destination)
-                #start_date_entry.mon_date_entry.insert(0,'MMM')
-                #start_date_entry.day_date_entry.insert(0,'DD')
-                #start_date_entry.year_date_entry.insert(0,'YY')# TODO: fix this to read from trip class
-                #budget_entry.insert(0,locatorID.budget)
-                ## TODO: add if statement to catch NONE
-
-
+                datelist=[start_date_entry.mon_date_entry.insert(0,'MMM'),start_date_entry.day_date_entry.insert(0,'DD'),start_date_entry.year_date_entry.insert(0,'YY')]
+                for d in datelist:
+                    try:
+                        d
+                    except:
+                        continue
+                try:
+                    budget_entry.insert(0,locatorID.budget)
+                except:
+                    pass
 
 
     class TripDetailsPage(Frame):
@@ -637,7 +638,7 @@ def main():
             button2.grid(row=1,column=1)
 
 
-    filename="pckl_test_file.pkl"
+
     global vacations #only need because gui is inside main() and functions arent, can probably merge all later
     vacations=new_or_edit(filename)
     root = TravelApp()
@@ -650,7 +651,13 @@ if __name__ == '__main__':
 
 
 
-#TODO: pkl file should actually save every time save is clicked.
+
+# TODO: set up delete buttons
+# TODO: setup edit cost page same way as 'save' on edit trip page
+
+
+
+#pkl file should actually save every time save is clicked.
 # could prob work with original file and append like for create_vacaylist_for_save,
 # not re-read it everytime but at least save it and use that file.
 # so, 'r' file only once at app open, save at every 'save' click, just keep editing
