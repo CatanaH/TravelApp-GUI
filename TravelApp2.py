@@ -131,27 +131,46 @@ class UnreservedCost():
 
 
 class Trip():
-    def __init__(self,destination='', approx_date='None',budget='None'):
+    def __init__(self,destination='',budget='None'):
         self.trip_plans = []
         self.destination = destination
-        self.approx_date = approx_date
+
         self.budget = budget
 
     def __str__(self):
-        ## CLI print format for TripListPage, EditTripPage,TripDetailsPage
-        date=''
-        # for i in self.approx_date:
-        #     date += (i+' ')
-        return self.destination + ' - '+ date # +"budget: "+str(self.budget)
+        try:
+            date=self.mon_date+' '+str(self.day_date)+'/'+str(self.year_date)
+        except AttributeError:
+            date='none'
+        return self.destination + ': '+ date # +"budget: "+str(self.budget)
 
-    def update_trip_title(self,tripname,date, budget):
+    def update_trip_title(self,tripname,mon_date,day_date,year_date, budget):
+        months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','']
         self.destination = tripname
-        self.approx_date = date
+        try:
+            mon_date=mon_date.capitalize()[:3]
+            if mon_date in months:
+                self.mon_date=mon_date
+        except:
+            self.mon_date=''
+            ## TODO: add in error checking for mmm as str in list, and dd/yy as int
+        try:
+            if len(str(day_date)) <= 2:
+                self.day_date=day_date
+        except:
+            self.day_date=''
+        try:
+            if len(str(year_date)) == 2:
+                self.year_date=year_date
+        except:
+            self.year_date=''
+
+
         try: #must be number for later maths
             edited_ans=float(budget)
             self.budget = budget
         except:
-            print("Budget must be integer")
+            print("Budget must be a number")
 
 
 
@@ -232,18 +251,24 @@ class Trip():
 to open saved file or create a new one
 '''
 
-def sort_trips_descending(trip_list):
-    months=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec']
+def sort_trips_descending(trip_list): ## TODO: sort trips with new obj atrb. mon/dd/yy
+    months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','']
+
     trips_no_date=[]#add to end of sorted list
     trips_with_dates=[] #collect obj to sort
     for trip in trip_list:
-        if type(trip.approx_date)==list:
+        try:
+            x=(trip.mon_date,trip.day_date,trip.year_date) #maybe delete these later cause error check in trip obj should catch it
+            if trip.mon_date not in months:
+                trip.mon_date =''
             trips_with_dates.append(trip)
-        else:
+        except AttributeError:
             trips_no_date.append(trip)
-    trip_list=sorted(trips_with_dates, key=lambda v: ( v.approx_date[1],months.index(v.approx_date[0])))
+
+    trip_list=sorted(trips_with_dates, key=lambda v: ( v.year_date,months.index(v.mon_date),v.day_date)) #months.index(v.mon_date)
     trip_list.extend(trips_no_date)
     print("sorted success")
+    vacations=trip_list
     return(trip_list)
 
 
@@ -263,31 +288,32 @@ def vacay_trips_display(vacations): #prints vacations in a numbered list
 def new_or_edit(filename):
     try:
         vacations = load_trip_files(filename)
-        vacations=sort_trips_descending(vacations)
+        vacations=sort_trips_descending(vacations) ## TODO: need to fix sort feature for new date format
         return vacations
     except (FileNotFoundError):
         print("No pre-existing trip plans file found")
         return None
-    except: #,TypeError
-        print('Program Error, Contact Administrator')
+    # except: #,TypeError
+    #     print('Program Error, Contact Administrator')
 
 
 # def create_new_trip():
 #     trip=Trip()
 #     trip.update_trip_title()
 #     return trip
-def save_trip(locatorID,tripName,date,budget,controller=None):
+def save_trip(locatorID,tripName,mon_date,day_date,year_date,budget,controller=None):
     try: #makes sure all data is proper then redirects; except catches errors and does popups
         if locatorID == None: #to create a new trip obj
             trip=Trip()
-            trip.update_trip_title(tripName,date,budget)
+            trip.update_trip_title(tripName,mon_date,day_date,year_date,budget)
             locatorID=trip #provides new locator ID to work with
         else:
-            locatorID.update_trip_title(tripName,date,budget)
+            locatorID.update_trip_title(tripName,mon_date,day_date,year_date,budget)
         # print(trip)
         print(vacations)
         create_vacaylist_for_save(vacations,locatorID)
-        # save_trip_list(vacations,filename)  #comment outwhile testing to prevent bad data saves
+        save_trip_list(vacations,filename)  #comment outwhile testing to prevent bad data saves
+        return locatorID
 
     except TabError: #include specific errors and trigger popups (TabError for test, delete later)
         pass
@@ -344,16 +370,16 @@ def create_edit_trip(choice,vacations):
             print("Quit chosen, loop breaking")
             break
 
-        elif edit_trip == 'delete trip':
-                print(trip)
-                trip_plans_display(trip)
-                confirm=input("are you sure you want to delete this entire trip? [Y/n]")
-                if confirm=='Y':
-                    vacations.pop(trip_num)
-                    print("trip removed from vacation database")
-                    return (vacations,None)
-                else:
-                    print("action cancelled")
+        # elif edit_trip == 'delete trip':
+        #         # print(trip)
+        #         # trip_plans_display(trip)
+        #         # confirm=input("are you sure you want to delete this entire trip? [Y/n]")
+        #         if confirm=='Y':
+        #             vacations.pop(vacations.index(locatorID))
+        #             print("trip removed from vacation database")
+        #             # return (vacations,None)
+        #         else:
+        #             print("action cancelled")
 
         else:
             trip_plans_display(trip)
@@ -436,7 +462,9 @@ def save_trip_list(trip_list, filename):
         except:
             print('other error')
 
-
+def delete_trip(triplist,locatorID):
+    triplist.pop(triplist.index(locatorID))
+    save_trip_list(triplist,filename)
 ############################# tkinter stuff ###################################
 from tkinter import *
 
@@ -473,6 +501,18 @@ def limit_entry(str_var,length):
 
 
 def main():
+
+    def popupmsg(controller,msg,vacations,locatorID):
+        popup = Tk()
+        popup.wm_title("!")
+        label = Label(popup, text=msg)
+        label.pack(side="top", fill="x", pady=10)
+        B1 = Button(popup, text="Confirm Delete", command = lambda: [popup.destroy(),delete_trip(vacations,locatorID),controller.refresh_show_frame(TripListPage)]) #some reason this is throwing an error when the whole app is closed
+        B1.pack()
+        B2 = Button(popup, text="Cancel", command = popup.destroy)
+        B2.pack()
+        popup.mainloop()
+
     class TravelApp(Tk):
         def __init__(self, *args, **kwargs):
             Tk.__init__(self, *args, **kwargs)
@@ -506,12 +546,12 @@ def main():
             # print("start refresh") #testing
             frame = self.frames[cont]
             frame.destroy()
+
             frame = cont(self.container, self, locatorID)
             self.frames[cont] = frame
             frame.grid(row=0, column=0, sticky="nsew")
             # print("REfresh done") #testing
             # print(locatorID) #testing
-
 
     class TripListPage(Frame):
         def __init__(self, parent, controller,locatorID=None):
@@ -522,7 +562,7 @@ def main():
             button.grid(row=0,column=0)
 
             try:
-                for n, trip in enumerate(vacations):
+                for n, trip in enumerate(sort_trips_descending(vacations)):
                     label = Label(self, text=trip.__str__())
                     label.grid(row=(n+1),column=0,sticky='W')
                     button2 = Button(self, text="EDIT existing trip",
@@ -540,6 +580,10 @@ def main():
             start_date_var=StringVar()
             budget_var=StringVar() #when intvar, breaks if char
 
+            if locatorID!=None:
+                prev_pg=TripDetailsPage
+            else:
+                prev_pg=TripListPage
 
             label = Label(self, text="Create or Edit Trip Details Here")
             label.grid(row=0,column=0)
@@ -547,13 +591,20 @@ def main():
                 label = Label(self, text=locatorID.__str__())
                 label.grid(row=1,column=0)
 
-            button1 = Button(self, text="Back to Home(DELETE)",  #pop up to confirm then redirects page
-                        command=lambda: controller.refresh_show_frame(TripListPage))
+            if locatorID != None:
+                button_del = Button(self, text="DELETE entire trip",
+                            command=lambda: [popupmsg(controller,"test test",vacations,locatorID),controller.refresh_show_frame(TripListPage)])
+                button_del.grid(row=5,column=0)
+
+            button1 = Button(self, text="CANCEL",
+                        command=lambda:[controller.refresh_show_frame(prev_pg,locatorID)])
             button1.grid(row=4,column=0)
 
-
-            button2 = Button(self, text="SAVE, continue to trip details", state='disabled', ## TODO: create check that requires trip title for save button to work
-                        command=lambda:[save_trip(locatorID,trip_name_var.get(),start_date_var.get(),budget_var.get()),controller.refresh_show_frame(TripDetailsPage,locatorID)])
+            button2 = Button(self, text="SAVE", state='disabled', command=lambda:
+                controller.refresh_show_frame(TripDetailsPage,save_trip(
+                locatorID,trip_name_var.get(),start_date_entry.mon_date.get(),
+                start_date_entry.day_date.get(),start_date_entry.year_date.get(),
+                budget_var.get())))
             button2.grid(row=4,column=1)
 
             def savebtn_active(event):
@@ -587,12 +638,15 @@ def main():
             if locatorID != None:
                 button2.config(state='active')
                 trip_name_entry.insert(0,locatorID.destination)
-                datelist=[start_date_entry.mon_date_entry.insert(0,'MMM'),start_date_entry.day_date_entry.insert(0,'DD'),start_date_entry.year_date_entry.insert(0,'YY')]
-                for d in datelist:
-                    try:
-                        d
-                    except:
-                        continue
+                try:
+                    datelist=[start_date_entry.mon_date_entry.insert(0,locatorID.mon_date),start_date_entry.day_date_entry.insert(0,locatorID.day_date),start_date_entry.year_date_entry.insert(0,locatorID.year_date)]
+                    for d in datelist:
+                        try:
+                            d
+                        except:
+                            continue
+                except:
+                    pass
                 try:
                     budget_entry.insert(0,locatorID.budget)
                 except:
@@ -664,6 +718,3 @@ if __name__ == '__main__':
 # trip_list as you go, so if program is closed by [X] nothing is lost...
 
 #otherwise have to build in pop up to verify close and save that is linked into base .destroy logic of tkinter
-
-
-# commit: save button to save to file, check for input,;create obj and redirects to new page
