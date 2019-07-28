@@ -502,7 +502,7 @@ def limit_entry(str_var,length):
 
 def main():
 
-    def popupmsg(controller,msg,vacations,locatorID):
+    def popup_dlt_conf(controller,msg,vacations,locatorID):
         popup = Tk()
         popup.wm_title("!")
         label = Label(popup, text=msg)
@@ -511,6 +511,29 @@ def main():
         B1.pack()
         B2 = Button(popup, text="Cancel", command = popup.destroy)
         B2.pack()
+        popup.mainloop()
+
+    def popup_costtype(controller,msg,locatorID):
+        popup = Tk()
+        popup.geometry('125x100')
+        popup.wm_title("Create a New Cost")
+        label = Label(popup, text='Please pick a cost type')
+        label.grid(columnspan=2)
+
+        def act_btn(*args):
+            if costtype_var.get() in list(choices):
+                B1.config(state='active')
+        costtype_var = StringVar(popup)
+        choices = { 'Transport','Lodging','Event','Meal','Merchandise','Fee'}
+        costtype_var.set('choose cost') # set the default option
+        popupMenu = OptionMenu(popup, costtype_var, *choices)
+        popupMenu.grid(columnspan=2,sticky='ew')
+        costtype_var.trace('w', act_btn)
+
+        B2 = Button(popup, text="Cancel", command = popup.destroy)
+        B2.grid(row=3)
+        B1 = Button(popup,state='disabled', text="create cost", command = lambda: [popup.destroy(),controller.refresh_show_frame(EditCostPage,locatorID,costtype_var)])
+        B1.grid(row=3,column=1)
         popup.mainloop()
 
     class TravelApp(Tk):
@@ -536,25 +559,25 @@ def main():
             # print(locatorID) #testing
             frame.tkraise()
 
-        def refresh_show_frame(self,cont,locatorID=None):
+        def refresh_show_frame(self,cont,locatorID=None,costID=None):
             # print("start refresh")
             self.refresh_frame(cont, locatorID)
             self.show_frame(cont)
             # print("END refresh_show_frame") #testing
 
-        def refresh_frame(self,cont, locatorID=None):
+        def refresh_frame(self,cont, locatorID=None,costID=None):
             # print("start refresh") #testing
             frame = self.frames[cont]
             frame.destroy()
 
-            frame = cont(self.container, self, locatorID)
+            frame = cont(self.container, self, locatorID,costID)
             self.frames[cont] = frame
             frame.grid(row=0, column=0, sticky="nsew")
             # print("REfresh done") #testing
             # print(locatorID) #testing
 
     class TripListPage(Frame):
-        def __init__(self, parent, controller,locatorID=None):
+        def __init__(self, parent, controller,locatorID=None,costID=None):
             Frame.__init__(self,parent)
 
             button = Button(self, text="ADD a new trip",
@@ -573,7 +596,7 @@ def main():
 
 
     class EditTripPage(Frame):
-        def __init__(self, parent, controller,locatorID=None):
+        def __init__(self, parent, controller,locatorID=None,costID=None):
             Frame.__init__(self, parent)
 
             trip_name_var=StringVar()
@@ -593,7 +616,7 @@ def main():
 
             if locatorID != None:
                 button_del = Button(self, text="DELETE entire trip",
-                            command=lambda: [popupmsg(controller,"test test",vacations,locatorID),controller.refresh_show_frame(TripListPage)])
+                            command=lambda: popup_dlt_conf(controller,"test test",vacations,locatorID))
                 button_del.grid(row=5,column=0)
 
             button1 = Button(self, text="CANCEL",
@@ -654,7 +677,7 @@ def main():
 
 
     class TripDetailsPage(Frame):
-        def __init__(self, parent, controller,locatorID=None):
+        def __init__(self, parent, controller,locatorID=None,costID=None):
             Frame.__init__(self, parent)
 
             label = Label(self, text="View list of trip costs here:")
@@ -674,15 +697,18 @@ def main():
                             command=lambda: controller.refresh_show_frame(EditTripPage,locatorID=locatorID))
             button2.grid(row=1,column=3)
             button3 = Button(self, text="ADD new cost",  #pop up asks what kind of cost
-                            command=lambda: controller.refresh_show_frame(EditCostPage,locatorID=locatorID))
+                            command=lambda: popup_costtype(controller,'pick a cost',locatorID))
+                            #controller.refresh_show_frame(EditCostPage,locatorID=locatorID)
             button3.grid(row=2,column=3)
 
 
     class EditCostPage(Frame):
-        def __init__(self, parent, controller,locatorID=None):
+        def __init__(self, parent, controller,locatorID=None,costID=None):
             Frame.__init__(self, parent)
             label = Label(self, text="Edit costs or create new one here")
             label.grid()
+            label2 = Label(self, text=costID)
+            label2.grid(row=0,column=3)
 
             button1 = Button(self, text="CANCEL/DELETE, Back to trip details", ##pop up confirmation then redirects page
                             command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
@@ -706,15 +732,5 @@ if __name__ == '__main__':
 
 
 
-# TODO: set up delete buttons
-# TODO: setup edit cost page same way as 'save' on edit trip page
-
-
-
-#pkl file should actually save every time save is clicked.
-# could prob work with original file and append like for create_vacaylist_for_save,
-# not re-read it everytime but at least save it and use that file.
-# so, 'r' file only once at app open, save at every 'save' click, just keep editing
-# trip_list as you go, so if program is closed by [X] nothing is lost...
-
-#otherwise have to build in pop up to verify close and save that is linked into base .destroy logic of tkinter
+# TODO: setup edit cost page same way as 'save' on edit trip page,
+#pop up and redirect to EditCostPage with drop down created
