@@ -1,7 +1,7 @@
 import pickle
 filename="pckl_test_file.pkl"
 '''
-travel app; 'Transport','Lodging','Event','Meal','Merchandise','Fee'
+travel app; 'Transportation','Lodging','Event','Meal','Merchandise','Fee'
 use classes to sort and organize and call data as needed
 
 #possible future feature: organizes on calendar, shows what has not been booked for dates, ex. no hotel wednesday night
@@ -9,23 +9,21 @@ use classes to sort and organize and call data as needed
 enter ahead of time:
 flight:price, datetime,airline, airports, conf# seat#?
 housing: price, dates, location, conf#
-transport: price, dates, company, pickup/dropoff, conf#
-entertainment: event, price, datetime, conf#, location
+transportation: price, dates, company, pickup/dropoff, conf#
+event: event, price, datetime, conf#, location
 
 track as u go:
 food: price, datetime
 merch: item, location, price
 Fee:
 '''
-# charge_options = ['Transport','Lodging','Event','Meal','Merchandise','Fee']
+# charge_options = ['Transportation','Lodging','Event','Meal','Merchandise','Fee']
 
 
 class ReservedCost():
-    #type: transport,lodging,event; sub_type:[flight,train,boat],[hotel,bnb,camping]
-    def __init__(
-    self,type='', price='Unknown', pay_method='', pointa='',
+    def __init__(self,type, price='', pay_method='', pointa='', #possibly remove this and only assign attr in editcost
         start_date='', start_time='', pointb='', end_date='',
-        end_time='', sub_type='', conf='', company='', misc=None
+        end_time='', sub_type='', conf='', company='', misc=''
     ):
         self.type=type
         self.price=price
@@ -42,34 +40,24 @@ class ReservedCost():
         self.misc=misc
 
 
-    def edit_cost(self):
-        ## CLI for EditCostPage
-        edit_lst=[] #should maybe be using a dictionary here? for printing and item assignment instead of list?
-        for i in [(self.type,'type'),(self.sub_type,'sub_type'),(self.price,'price'),(self.pay_method,'payment method'),(self.pointa,'pointa'),(self.start_date,'start date mm/dd/yy'),(self.start_time,'start time'),(self.pointb,'pointb'),(self.end_date,'end date mm/dd/yy'),(self.end_time,'end_time'),(self.conf,'conf'),(self.company,'company'),(self.misc,'misc')]:
-            print("{}={}\ttype new info or 'enter' to skip".format(i[1],i[0]))
-            edited_ans=input()
-            if edited_ans =='':
-                edit_lst.append(i[0])
-            else:
-                edit_lst.append(edited_ans)
-
-        if len(edit_lst) ==13:
-            self.type=edit_lst[0]
-            self.sub_type =edit_lst[1]
-            self.price=edit_lst[2]
-            self.pay_method=edit_lst[3]
-            self.pointa=edit_lst[4]
-            self.start_date=edit_lst[5]
-            self.start_time = edit_lst[6]
-            self.pointb = edit_lst[7]
-            self.end_date = edit_lst[8]
-            self.end_time = edit_lst[9]
-            self.conf = edit_lst[10]
-            self.company = edit_lst[11]
-            self.misc=edit_lst[12]
-            print("All updated")
-        else:
-            print("error, could not update")
+    def edit_cost(self,type, price='', pay_method='', pointa='', #possibly remove '' i think all variables are being fed in, no blanks
+        start_date='', start_time='', pointb='', end_date='',
+        end_time='', sub_type='', conf='', company='', misc=''
+    ):
+        self.type=type
+        self.price=price
+        self.pay_method=pay_method
+        self.pointa=pointa
+        self.start_date=start_date
+        self.start_time = start_time
+        self.pointb = pointb
+        self.end_date = end_date
+        self.end_time = end_time
+        self.sub_type = sub_type
+        self.conf = conf
+        self.company = company
+        self.misc=misc
+        print('done editing')
 
 
     def __str__(self):
@@ -203,7 +191,7 @@ class Trip():
     #####set up travel plans thru the appropriate classes here####
     def add_reserved_cost(self,**kwargs):
         x = ReservedCost(**kwargs)
-        x.edit_cost()
+        # x.edit_cost()
         self.trip_plans.append(x)
 
     def add_unreserved_cost(self,**kwargs):
@@ -215,8 +203,8 @@ class Trip():
         while True:
             #button in TripDetailsPage triggers popup that asks charge type,
             #then directs to EditCostPage with variable loading correct type
-            print("What type of charge is it?\nTransport, Lodging, Event\nMeal, Merchandise, Fee")
-            charge_options = ['transport','lodging','event','meal','merchandise','fee','t','l','e','f','q']
+            print("What type of charge is it?\nTransportation, Lodging, Event\nMeal, Merchandise, Fee")
+            charge_options = ['transportation','lodging','event','meal','merchandise','fee','t','l','e','f','q']
             charge_type_full = input()
             if len(charge_type_full)!=0:
                 charge_type=charge_type_full.lower()[0]
@@ -267,7 +255,7 @@ def sort_trips_descending(trip_list): ## TODO: sort trips with new obj atrb. mon
 
     trip_list=sorted(trips_with_dates, key=lambda v: ( v.year_date,months.index(v.mon_date),v.day_date)) #months.index(v.mon_date)
     trip_list.extend(trips_no_date)
-    print("sorted success")
+    # print("sorted success")
     vacations=trip_list
     return(trip_list)
 
@@ -317,6 +305,21 @@ def save_trip(locatorID,tripName,mon_date,day_date,year_date,budget,controller=N
 
     except TabError: #include specific errors and trigger popups (TabError for test, delete later)
         pass
+
+
+def save_cost(locatorID,costID,**kwargs): #not sure if i can just edit of if need to indez from trip detail list to edit
+    # print(type(costID))
+    if type(costID)!= str and type(costID)!= None: ## TODO: figure out how to test for obj type, to simpify this ifstatement
+        #to overwrite existing ones
+        costID.edit_cost(**kwargs)
+    elif type(costID)==str:#to create new cost obj
+        locatorID.add_reserved_cost(**kwargs)
+    else:
+        print('not doin notin')
+        pass #maybe popup saying didnt work?
+    save_trip_list(vacations,filename)  #comment outwhile testing to prevent bad data saves
+    return locatorID
+
 
 
 def create_edit_trip(choice,vacations):
@@ -524,7 +527,7 @@ def main():
             if costtype_var.get() in list(choices):
                 B1.config(state='active')
         costtype_var = StringVar(popup)
-        choices = { 'Transport','Lodging','Event','Meal','Merchandise','Fee'}
+        choices = { 'Transportation','Lodging','Event','Meal','Merchandise','Fee'}
         costtype_var.set('choose cost') # set the default option
         popupMenu = OptionMenu(popup, costtype_var, *choices)
         popupMenu.grid(columnspan=2,sticky='ew')
@@ -532,7 +535,9 @@ def main():
 
         B2 = Button(popup, text="Cancel", command = popup.destroy)
         B2.grid(row=3)
-        B1 = Button(popup,state='disabled', text="create cost", command = lambda: [popup.destroy(),controller.refresh_show_frame(EditCostPage,locatorID,costtype_var)])
+        B1 = Button(popup,state='disabled', text="create cost", command = (
+            lambda: [popup.destroy(),controller.refresh_show_frame(
+            EditCostPage,locatorID,costtype_var.get())]))
         B1.grid(row=3,column=1)
         popup.mainloop()
 
@@ -561,11 +566,11 @@ def main():
 
         def refresh_show_frame(self,cont,locatorID=None,costID=None):
             # print("start refresh")
-            self.refresh_frame(cont, locatorID)
+            self.refresh_frame(cont, locatorID,costID)
             self.show_frame(cont)
             # print("END refresh_show_frame") #testing
 
-        def refresh_frame(self,cont, locatorID=None,costID=None):
+        def refresh_frame(self,cont, locatorID,costID):
             # print("start refresh") #testing
             frame = self.frames[cont]
             frame.destroy()
@@ -573,8 +578,7 @@ def main():
             frame = cont(self.container, self, locatorID,costID)
             self.frames[cont] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-            # print("REfresh done") #testing
-            # print(locatorID) #testing
+
 
     class TripListPage(Frame):
         def __init__(self, parent, controller,locatorID=None,costID=None):
@@ -687,7 +691,7 @@ def main():
                     label = Label(self, text=cost.__str__()) ## TODO: add more print details
                     label.grid(row=(1+n),column=0)
                     button4 = Button(self, text="EDIT existing cost",
-                                command=lambda: controller.refresh_show_frame(EditCostPage,locatorID=locatorID))
+                                command=lambda cost=cost: controller.refresh_show_frame(EditCostPage,locatorID,cost))
                     button4.grid(row=(1+n),column=1)
 
             button1 = Button(self, text="Back to Home(DONE)",  #pop up to confirm then redirects page
@@ -702,20 +706,112 @@ def main():
             button3.grid(row=2,column=3)
 
 
-    class EditCostPage(Frame):
+    class EditCostPage(Frame): ## todo: if costID==obj edit existing traits, else: create new obj in trip
         def __init__(self, parent, controller,locatorID=None,costID=None):
             Frame.__init__(self, parent)
+            try:
+                type=costID.type
+            except AttributeError:
+                type= costID
             label = Label(self, text="Edit costs or create new one here")
             label.grid()
-            label2 = Label(self, text=costID)
-            label2.grid(row=0,column=3)
 
-            button1 = Button(self, text="CANCEL/DELETE, Back to trip details", ##pop up confirmation then redirects page
+
+            button1 = Button(self, text="CANCEL", ##pop up confirmation then redirects page
                             command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
             button1.grid(row=1,column=0)
-            button2 = Button(self, text="SAVE, Back to trip details",
-                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
+            button2 = Button(self, text="SAVE",command=lambda: controller.refresh_show_frame(TripDetailsPage,
+                save_cost(locatorID,costID,type=type, price=price.get(), pay_method=pay_method.get(),
+                pointa=pointa.get(),start_date=start_date.get(), start_time=start_time.get(),
+                pointb=pointb.get(), end_date=end_date.get(),end_time=end_time.get(), sub_type=sub_type.get(),
+                conf=conf.get(), company=company.get(), misc=misc.get())))
             button2.grid(row=1,column=1)
+
+######################################### working on delete btn
+            if locatorID != None:
+                button_del = Button(self, text="DELETE Cost Item",
+                    command=lambda: popup_dlt_conf(controller,"test test",vacations,locatorID))
+                button_del.grid(row=5,column=0)
+            button3 = Button(self, text="DELETE", ##pop up confirmation then redirects page
+                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
+            button3.grid(row=1,column=2)
+
+            # #######################labels and entry fields ################################
+            med_font=('arial',14)
+            sub_type = StringVar()
+            type = type
+            price = StringVar()
+            pay_method = StringVar()
+            start_date = StringVar()
+            end_date = StringVar()
+            company = StringVar()
+            conf = StringVar()
+            pointa = StringVar()
+            pointb = StringVar()
+            start_time = StringVar()
+            end_time = StringVar()
+            misc = StringVar()
+
+            # tells wich fields to print compared to label_entry_dict
+            cost_type_dict={
+            'Fee':[1,1,1,1,1,0,1,0,0,0,0,0,1],
+            'Merchandise':[1,1,1,1,1,0,1,0,0,0,0,0,1],
+            'Meal':[1,1,1,1,1,0,1,0,0,0,0,0,1],
+            'Transportation':[1,1,1,1,1,1,1,1,1,1,1,1,1],
+            'Lodging':[1,1,1,1,1,1,1,1,1,0,1,1,1],
+            'Event':[1,1,1,1,1,0,1,1,1,0,1,0,1]}
+
+            for cost in cost_type_dict:
+                if type == cost:
+                    activate_entry=cost_type_dict[cost]
+                    break
+                else:
+                    activate_entry=None
+            # TODO: make this word prettier for ease of reading
+            label_entry_dict={'sub_type':sub_type,
+                        'type':type,  # TODO: trun into button w/popup
+                        'price':price,
+                        'pay_method':pay_method,
+                        'start_date':start_date, # TODO: start/end date need to be date fields
+                        'end_date':end_date,
+                        'company':company,
+                        'conf_num':conf,
+                        'point_a':pointa,
+                        'point_b':pointb,
+                        'start_time':start_time,
+                        'end_time':end_time,
+                        'misc':misc
+                        }
+            if activate_entry!=None:
+                for n,x in enumerate(label_entry_dict):
+                    if n % 2==0:
+                        col=0
+                        row=2+n
+                    else:
+                        col=3
+                        row=1+n
+                    if activate_entry[n]:
+                        if x=='type':
+                            label = Label(self, font=med_font,text=type)# TODO: change to what type of ...+
+                            label.grid(row=row,column=col, sticky="E")
+                            button = Button(self, text="this will be 'change type btn'")
+                            button.grid(row=row,column=col+1)
+                        else:
+                            label = Label(self, font=med_font,text=x)# TODO: change to what type of ...+ for subtype
+                            label.grid(row=row,column=col, sticky="E")
+                            entry = Entry(self, font=med_font,width=20, bd=2,insertwidth=2,textvariable=label_entry_dict[x])
+                            entry.grid(row=row,column=col+1)
+                            if costID != None:
+                                try:
+                                    assign_lst=[costID.sub_type, costID.type, costID.price,
+                                    costID.pay_method,costID.start_date,costID.end_date,
+                                    costID.company,costID.conf,costID.pointa,costID.pointb,
+                                    costID.start_time,costID.end_time,costID.misc]
+                                    entry.insert(0,str(assign_lst[n]))
+                                except AttributeError:
+                                    continue
+
+
 
 
 
@@ -729,8 +825,17 @@ if __name__ == '__main__':
     main()
 ##############################################################################
 
+#730ish  currently woring on delete btn edit cost page. need to tie in pop up window that calls trip.remove_cost
+
+
+# use ReservedCost class to hold all costs, easier this way.
+# TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it
 
 
 
-# TODO: setup edit cost page same way as 'save' on edit trip page,
-#pop up and redirect to EditCostPage with drop down created
+
+#should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
+#have a add loging to transportation button for things like cruises. just for future tracking
+# add change cost type option that trigers popup to confirm, reggenerates page, feeds current info into new one, wipes out unrelated data, and overwrites it in save data
+
+## added entry fields to editcostpage, filter, and display entries, added save button to edit/create cost page
