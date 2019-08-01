@@ -1,4 +1,5 @@
 import pickle
+import pdb  #python debugger. use pdb.set_trace()
 filename = "pckl_test_file.pkl"
 '''
 travel app;
@@ -183,9 +184,9 @@ def sort_trips_descending(trip_list):
 
 def new_or_edit(filename):
     try:
-        vacations = load_trip_files(filename)
-        vacations = sort_trips_descending(vacations)
-        return vacations
+        trip_list = load_trip_files(filename)
+        trip_list = sort_trips_descending(trip_list)
+        return trip_list
     except (FileNotFoundError):
         # No pre-existing trip plans file found
         return None
@@ -212,6 +213,7 @@ def save_trip(locatorID, tripName, mon_date, day_date, year_date, budget, contro
             locatorID = trip #provides new locator ID to work with
         else:
             locatorID.update_trip_title(tripName, mon_date, day_date, year_date, budget)
+
         create_vacaylist_for_save(vacations, locatorID)
         save_trip_list(vacations, filename)  #comment outwhile testing to prevent bad data saves
         return locatorID
@@ -225,15 +227,16 @@ def delete_trip(triplist, locatorID):
     save_trip_list(triplist, filename)
 
 
-def create_vacaylist_for_save(vacations, locatorID, choice = None, trip_num = None):
+def create_vacaylist_for_save(trip_list, locatorID):
+    global vacations #must declare it global to effect outside this function
 ###### this is for saving trip
-    if vacations == None:
+    if trip_list == None:
         #("creating new triplist")
-        vacations = [trip, ]
-    elif locatorID in vacations:
+        vacations = [locatorID, ]
+    elif locatorID in trip_list:
         #dont need to rewrite list, obj already references whats been edited
         pass
-    elif locatorID not in vacations:
+    elif locatorID not in trip_list:
         vacations.append(locatorID)
 
     else:
@@ -241,13 +244,13 @@ def create_vacaylist_for_save(vacations, locatorID, choice = None, trip_num = No
         ## TODO: popup telling user it failed
         return None #to avoid breaking if this clause runs
 
-
 def save_trip_list(trip_list, filename):
     '''
     to save trip obj data to be accessed at opening of program
     combine obj's into a list to be uploaded to file
     #I want all trips to be in one file, read/edited/saved to
     '''
+
     if trip_list == None:
         #No Data to save
         pass
@@ -255,11 +258,14 @@ def save_trip_list(trip_list, filename):
         try:
             with open(filename, 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(trip_list, output, -1)
+                print("trip list saved")
                 #('trip list officially saved')
         except UnboundLocalError:
             #('Cannot Save Trip, Error')
+            print('1')
             pass
         except:
+            print('2')
             #('other error')
             pass
 
@@ -383,7 +389,7 @@ def main():
 
 
     class TripListPage(Frame):
-        def __init__(self, parent, controller,locatorID = None, costID = None):
+        def __init__(self, parent, controller,locatorID=None, costID=None):
             Frame.__init__(self, parent)
 
             button = Button(self, text = "ADD a new trip",
@@ -630,22 +636,16 @@ if __name__ == '__main__':
 
 # TODO:  customize what prints in edit cost labels
 
-# TODO: add trip cost total and budget comparison
 # TODO: add date fields to edit cost page dates
 # TODO: sort trip details by date
 # TODO: make trip details display nicer, easier to read.
 # TODO: build tests to automate and check when i make changes
 # TODO: add scroll bar to long pages
 # TODO: make the whole thing look nicer with styling
-
-
-
-# use ReservedCost class to hold all costs, easier this way.
 # TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it for both edit pages
-
 
 #should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
 #have a add loging to transportation button for things like cruises. just for future tracking
 #
 
-## commit: removed old cmd printing
+## commit: adjusted save function to account for new blank files, removed un-needed additional files
