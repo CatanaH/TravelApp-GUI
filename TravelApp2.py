@@ -168,71 +168,75 @@ class Trip():
         costs=0
         for cost in self.trip_plans:
             try:
-                trip_total+=int(cost.price)
+                trip_total+=float(cost.price)
                 costs+=1
             except ValueError:
                 continue
-        print("\nrunning trip total is.. $"+str(trip_total))
+        # print("\nrunning trip total is.. $"+str(trip_total))
         return trip_total
 
     def within_budget_check(self):
-        print(self.budget)
-        print(type(self.budget))
-        if type(self.budget) == int:
-            t= self.trip_total_price()
-            if self.budget > t:
-                r=self.budget-t
-                print("You have ${} remaining".format(r))
+        # print(self.budget)
+        # print(type(self.budget))
+        try:
+            self.budget=float(self.budget)
+        # if type(self.budget) == int or type(self.budget)==float:
+            total= self.trip_total_price()
+            if self.budget > total:
+                remaining=self.budget-total
+                return("Running Total=${t} Budget=${b} You have ${r} remaining".format(t=total,b=self.budget,r=remaining))
             else:
-                r=t-self.budget
-                print("You are ${} over budget".format(r))
-        else:
-            print("can't print budget")
+                remaining=total-self.budget
+                return("Running Total=${t} Budget=${b} You are ${r} over budget".format(t=total,b=self.budget,r=remaining))
+
+        except AttributeError:
+            return("error doesnt have a budget")
+        except ValueError:
+            return("Budget must be a number")
     #####set up travel plans thru the appropriate classes here####
     def add_reserved_cost(self,**kwargs):
         x = ReservedCost(**kwargs)
+        self.trip_plans.append(x)
+
+    # def add_unreserved_cost(self,**kwargs):
+        # x = UnreservedCost(**kwargs)
         # x.edit_cost()
-        self.trip_plans.append(x)
+        # self.trip_plans.append(x)
 
-    def add_unreserved_cost(self,**kwargs):
-        x = UnreservedCost(**kwargs)
-        x.edit_cost()
-        self.trip_plans.append(x)
+    # def add_cost(self):
+    #     while True:
+    #         #button in TripDetailsPage triggers popup that asks charge type,
+    #         #then directs to EditCostPage with variable loading correct type
+    #         print("What type of charge is it?\nTransportation, Lodging, Event\nMeal, Merchandise, Fee")
+    #         charge_options = ['transportation','lodging','event','meal','merchandise','fee','t','l','e','f','q']
+    #         charge_type_full = input()
+    #         if len(charge_type_full)!=0:
+    #             charge_type=charge_type_full.lower()[0]
+    #             if charge_type_full.lower() in charge_options or charge_type in charge_options:
+    #                 break
+    #     if charge_type=='t':
+    #         self.add_reserved_cost(type='Transportation')
+    #     elif charge_type=='l':
+    #         self.add_reserved_cost(type='Lodging')
+    #     elif charge_type=='e':
+    #         self.add_reserved_cost(type='Event')
+    #     elif charge_type_full.lower()=='meal':
+    #         self.add_unreserved_cost(type='Meal')
+    #     elif charge_type_full.lower()[:4]=='merch':
+    #         self.add_unreserved_cost(type='Merchandise')
+    #     elif charge_type=='f':
+    #         self.add_unreserved_cost(type='Fee')
+    #     else:
+    #         return None # for 'quit'
 
-    def add_cost(self):
-        while True:
-            #button in TripDetailsPage triggers popup that asks charge type,
-            #then directs to EditCostPage with variable loading correct type
-            print("What type of charge is it?\nTransportation, Lodging, Event\nMeal, Merchandise, Fee")
-            charge_options = ['transportation','lodging','event','meal','merchandise','fee','t','l','e','f','q']
-            charge_type_full = input()
-            if len(charge_type_full)!=0:
-                charge_type=charge_type_full.lower()[0]
-                if charge_type_full.lower() in charge_options or charge_type in charge_options:
-                    break
-        if charge_type=='t':
-            self.add_reserved_cost(type='Transportation')
-        elif charge_type=='l':
-            self.add_reserved_cost(type='Lodging')
-        elif charge_type=='e':
-            self.add_reserved_cost(type='Event')
-        elif charge_type_full.lower()=='meal':
-            self.add_unreserved_cost(type='Meal')
-        elif charge_type_full.lower()[:4]=='merch':
-            self.add_unreserved_cost(type='Merchandise')
-        elif charge_type=='f':
-            self.add_unreserved_cost(type='Fee')
-        else:
-            return None # for 'quit'
+    def remove_cost(self, vacations,costID):
+        ## button on EditCostPage, triggers pop up to confirm, then redirects to TripDetailsPage
+        try:
+            self.trip_plans.remove(costID)
+            save_trip_list(vacations,filename)
+        except ValueError:
+            print('could not remove cost from trip plans')
 
-    def remove_cost(self, index_place):
-        ## button on EditCostPage, triggers pop up to confirm, redirects to TripDetailsPage
-        confirm = input("are you sure you want to delete this cost:\n{}\n[Y/n]".format(self.trip_plans[index_place]))
-        if confirm == 'Y':
-            self.trip_plans.pop(index_place)
-            print("trip cost has been deleted")
-        else:
-            print("action cancelled\n")
 
 '''
 ####start program and read pre existing data
@@ -505,10 +509,21 @@ def limit_entry(str_var,length):
 
 def main():
 
-    def popup_dlt_conf(controller,msg,vacations,locatorID):
+    def popup_dlt_cost_conf(controller,vacations,locatorID,costID):
         popup = Tk()
         popup.wm_title("!")
-        label = Label(popup, text=msg)
+        label = Label(popup, text='Delete Cost PopUp')
+        label.pack(side="top", fill="x", pady=10)
+        B1 = Button(popup, text="Confirm Delete", command = lambda: [popup.destroy(),locatorID.remove_cost(vacations,costID),controller.refresh_show_frame(TripDetailsPage,locatorID)]) #some reason this is throwing an error when the whole app is closed
+        B1.pack()
+        B2 = Button(popup, text="Cancel", command = popup.destroy)
+        B2.pack()
+        popup.mainloop()
+
+    def popup_dlt_trip_conf(controller,vacations,locatorID):
+        popup = Tk()
+        popup.wm_title("!")
+        label = Label(popup, text='Delete Trip PopUp')
         label.pack(side="top", fill="x", pady=10)
         B1 = Button(popup, text="Confirm Delete", command = lambda: [popup.destroy(),delete_trip(vacations,locatorID),controller.refresh_show_frame(TripListPage)]) #some reason this is throwing an error when the whole app is closed
         B1.pack()
@@ -620,7 +635,7 @@ def main():
 
             if locatorID != None:
                 button_del = Button(self, text="DELETE entire trip",
-                            command=lambda: popup_dlt_conf(controller,"test test",vacations,locatorID))
+                            command=lambda: popup_dlt_trip_conf(controller,vacations,locatorID))
                 button_del.grid(row=5,column=0)
 
             button1 = Button(self, text="CANCEL",
@@ -704,6 +719,9 @@ def main():
                             command=lambda: popup_costtype(controller,'pick a cost',locatorID))
                             #controller.refresh_show_frame(EditCostPage,locatorID=locatorID)
             button3.grid(row=2,column=3)
+            if locatorID != None:
+                label = Label(self, text=locatorID.within_budget_check())
+                label.grid(row=3,column=3)
 
 
     class EditCostPage(Frame): ## todo: if costID==obj edit existing traits, else: create new obj in trip
@@ -730,11 +748,8 @@ def main():
 ######################################### working on delete btn
             if locatorID != None:
                 button_del = Button(self, text="DELETE Cost Item",
-                    command=lambda: popup_dlt_conf(controller,"test test",vacations,locatorID))
-                button_del.grid(row=5,column=0)
-            button3 = Button(self, text="DELETE", ##pop up confirmation then redirects page
-                            command=lambda: controller.refresh_show_frame(TripDetailsPage,locatorID=locatorID))
-            button3.grid(row=1,column=2)
+                    command=lambda: popup_dlt_cost_conf(controller,vacations,locatorID,costID))
+                button_del.grid(row=1,column=2)
 
             # #######################labels and entry fields ################################
             med_font=('arial',14)
@@ -825,17 +840,27 @@ if __name__ == '__main__':
     main()
 ##############################################################################
 
-#730ish  currently woring on delete btn edit cost page. need to tie in pop up window that calls trip.remove_cost
+
+#add change cost type option that trigers popup to confirm, reggenerates page, feeds current info into new one, wipes out unrelated data, and overwrites it in save data
+
+
+
+# TODO: add trip cost total and budget comparison
+# TODO: add date fields to edit cost page dates
+# TODO: sort trip details by date
+# TODO: make trip details display nicer, easier to read.
+# TODO: build tests to automate and check when i make changes
+# TODO: add scroll bar to long pages
+# TODO: make the whole thing look nicer with styling
+# TODO: remove unused functions and remove print statements
 
 
 # use ReservedCost class to hold all costs, easier this way.
-# TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it
-
-
+# TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it for both edit pages
 
 
 #should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
 #have a add loging to transportation button for things like cruises. just for future tracking
-# add change cost type option that trigers popup to confirm, reggenerates page, feeds current info into new one, wipes out unrelated data, and overwrites it in save data
+#
 
-## added entry fields to editcostpage, filter, and display entries, added save button to edit/create cost page
+## commit: added delete button to edit cost page, added within_budget_check method,result displays on trip details page
