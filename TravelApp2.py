@@ -197,12 +197,21 @@ def save_cost(locatorID, costID, **kwargs):
         #to overwrite existing ones
         # costID.edit_cost(**kwargs)
         if costID not in locatorID.trip_plans: #checks if obj not in trip list
+            print("appending new cost")
+            # pdb.set_trace()
+            costID.edit_cost(**kwargs)
             locatorID.trip_plans.append(costID)
+        else:
+            print('catching here')
+            costID.edit_cost(**kwargs)
     elif type(costID) == str:#to create new cost obj
+        print("Creating new cost")
         locatorID.add_reserved_cost(**kwargs)
     else:
         #maybe popup saying didnt work?
+        print('passing thru else statement line 209')
         pass
+    print("saving cost")
     save_trip_list(vacations, filename)  #comment outwhile testing to prevent bad data saves
     return locatorID
 
@@ -357,7 +366,7 @@ def main():
 
     def popup_change_costtype(controller,locatorID, costID):
         popup = Tk()
-        popup.geometry('225x100')
+        popup.geometry('300x100')
         popup.wm_title("Change Cost Type")
         label = Label(popup, text ='Please pick a new cost type')
         label.grid(columnspan = 2)
@@ -383,7 +392,7 @@ def main():
         def reassign_cost_type():
             costID.type=costtype_var.get()
         B1 = Button(popup, state = 'disabled', text = "Confirm Cost Type", command = (
-            lambda: [reassign_cost_type,popup.destroy(), controller.refresh_show_frame(
+            lambda: [reassign_cost_type(),popup.destroy(), controller.refresh_show_frame(
             EditCostPage, locatorID, costID)]))
         B1.grid(row = 4, column = 1)
         popup.mainloop()
@@ -684,18 +693,6 @@ if __name__ == '__main__':
 ##############################################################################
 
 
-
-####installed change cost type button, but it isnt working yet,
-        #it triggers pop up wich generates new page, but somereason a none type is being fed into the pop up and onto next page
-        #it is now not saving new costs other than sost type
-
-
-#add change cost type option that trigers popup to confirm, reggenerates page,
-#feeds current info into new one, wipes out unrelated data, and overwrites it in save data
-#   button same as add cost pop up, feed in locatorID if has one, produces new page with locator id info like standard page
-#   in class needs to filter by new type and erase unused data.
-#### figure out how to alter a current cost obj without editing the real thing until saving.
-        #using temp variable might add to end of list once saved not alter previous version: maybe just a popup saying its permanent?
 
 
 # TODO:  customize what prints in edit cost labels
