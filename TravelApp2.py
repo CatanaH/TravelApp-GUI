@@ -195,12 +195,23 @@ def new_or_edit(filename):
 def save_cost(locatorID, costID, **kwargs):
     if type(costID)!= str and type(costID) != None: ## TODO: figure out how to test for obj type, to simpify this if statement
         #to overwrite existing ones
-        costID.edit_cost(**kwargs)
+        # costID.edit_cost(**kwargs)
+        if costID not in locatorID.trip_plans: #checks if obj not in trip list
+            print("appending new cost")
+            # pdb.set_trace()
+            costID.edit_cost(**kwargs)
+            locatorID.trip_plans.append(costID)
+        else:
+            print('catching here')
+            costID.edit_cost(**kwargs)
     elif type(costID) == str:#to create new cost obj
+        print("Creating new cost")
         locatorID.add_reserved_cost(**kwargs)
     else:
         #maybe popup saying didnt work?
+        print('passing thru else statement line 209')
         pass
+    print("saving cost")
     save_trip_list(vacations, filename)  #comment outwhile testing to prevent bad data saves
     return locatorID
 
@@ -353,6 +364,40 @@ def main():
         B1.grid(row = 3, column = 1)
         popup.mainloop()
 
+    def popup_change_costtype(controller,locatorID, costID):
+        popup = Tk()
+        popup.geometry('300x100')
+        popup.wm_title("Change Cost Type")
+        label = Label(popup, text ='Please pick a new cost type')
+        label.grid(columnspan = 2)
+
+        def act_btn(*args):
+            if costtype_var.get() in list(choices):
+                B1.config(state ='active')
+        costtype_var = StringVar(popup)
+        choices = { 'Transportation', 'Lodging', 'Event', 'Meal', 'Merchandise', 'Fee'}
+        try:
+            costtype_var.set(costID.type) # set the default option
+        except:
+            costtype_var.set(costID)
+        popupMenu = OptionMenu(popup, costtype_var, *choices)
+        popupMenu.grid(columnspan = 2, sticky ='ew')
+        costtype_var.trace('w', act_btn)
+
+        label2 = Label(popup, text ='Are you sure? This change to cost type will be permanent.')
+        label2.grid(row=3,columnspan = 2)
+
+        B2 = Button(popup, text = "Cancel", command = popup.destroy)
+        B2.grid(row = 4)
+        def reassign_cost_type():
+            costID.type=costtype_var.get()
+        B1 = Button(popup, state = 'disabled', text = "Confirm Cost Type", command = (
+            lambda: [reassign_cost_type(),popup.destroy(), controller.refresh_show_frame(
+            EditCostPage, locatorID, costID)]))
+        B1.grid(row = 4, column = 1)
+        popup.mainloop()
+
+
     class TravelApp(Tk):
         def __init__(self, *args, **kwargs):
             Tk.__init__(self, *args, **kwargs)
@@ -489,7 +534,7 @@ def main():
 
 
     class TripDetailsPage(Frame):
-        def __init__(self, parent, controller, locatorID = None, costID = None):
+        def __init__(self, parent, controller, locatorID=None, costID=None):
             Frame.__init__(self, parent)
 
             label = Label(self, text = "View list of trip costs here:")
@@ -517,13 +562,19 @@ def main():
                 label.grid(row = 3, column = 3)
 
 
-    class EditCostPage(Frame): ## todo: if costID==obj edit existing traits, else: create new obj in trip
-        def __init__(self, parent, controller, locatorID = None, costID = None):
+    class EditCostPage(Frame):
+        def __init__(self, parent, controller, locatorID=None, costID=None):
             Frame.__init__(self, parent)
+
+            #cant use type() since obj has attribute type
+            if costID in ('Transportation', 'Lodging', 'Event', 'Meal', 'Merchandise', 'Fee'):
+                temp_obj = ReservedCost(type=costID)
+                costID = temp_obj
             try:
                 type = costID.type
             except AttributeError:
                 type = costID
+
             label = Label(self, text = "Edit costs or create new one here")
             label.grid()
 
@@ -538,7 +589,7 @@ def main():
                 conf = conf.get(), company = company.get(), misc = misc.get())))
             button2.grid(row = 1, column = 1)
 
-######################################### working on delete btn
+
             if locatorID != None:
                 button_del = Button(self, text = "DELETE Cost Item",
                     command = lambda: popup_dlt_cost_conf(controller, vacations, locatorID, costID))
@@ -569,15 +620,15 @@ def main():
             'Lodging':[1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
             'Event':[1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1]}
 
-            for cost in cost_type_dict:
+            for cost in cost_type_dict: #selects filter for cost type
                 if type == cost:
                     activate_entry = cost_type_dict[cost]
                     break
                 else:
                     activate_entry = None
             # TODO: make this word prettier for ease of reading
-            label_entry_dict = {'sub_type':sub_type,
-                        'type':type,  # TODO: trun into button w/popup
+            label_entry_dict = {'type':type,
+                        'sub_type':sub_type,
                         'price':price,
                         'pay_method':pay_method,
                         'start_date':start_date, # TODO: start/end date need to be date fields
@@ -590,6 +641,7 @@ def main():
                         'end_time':end_time,
                         'misc':misc
                         }
+
             if activate_entry!=None:
                 for n, x in enumerate(label_entry_dict):
                     if n % 2 == 0:
@@ -600,26 +652,35 @@ def main():
                         row = 1+n
                     if activate_entry[n]:
                         if x == 'type':
-                            label = Label(self, font = med_font, text = type)# TODO: change to what type of ...+
-                            label.grid(row = row, column = col, sticky = "E")
-                            button = Button(self, text = "this will be 'change type btn'")
-                            button.grid(row = row, column = col+1)
+                            label = Label(self, font = med_font, text = type)
+                            label.grid(row = row, column = col+1, sticky = "E")
+                            button = Button(self, text = "Change Cost Type", command=lambda:[ costID.edit_cost(type = type, price = price.get(), pay_method = pay_method.get(),
+                            pointa = pointa.get(), start_date = start_date.get(), start_time = start_time.get(),
+                            pointb = pointb.get(), end_date = end_date.get(), end_time = end_time.get(), sub_type = sub_type.get(),
+                            conf = conf.get(), company = company.get(), misc = misc.get()),popup_change_costtype(controller,locatorID,costID)])
+                            button.grid(row = row, column = col)
                         else:
                             label = Label(self, font = med_font, text = x)# TODO: change to what type of ...+ for subtype
                             label.grid(row = row, column = col, sticky = "E")
                             entry = Entry(self, font = med_font, width = 20, bd = 2, insertwidth = 2, textvariable = label_entry_dict[x])
                             entry.grid(row = row, column = col+1)
                             if costID != None:
-                                try:
-                                    assign_lst = [costID.sub_type, costID.type, costID.price,
+                                try: # TODO: move where this list is stored
+                                    assign_lst = [costID.type, costID.sub_type, costID.price,
                                     costID.pay_method, costID.start_date, costID.end_date,
                                     costID.company, costID.conf, costID.pointa, costID.pointb,
                                     costID.start_time, costID.end_time, costID.misc]
                                     entry.insert(0, str(assign_lst[n]))
                                 except AttributeError:
                                     continue
+                    elif activate_entry[n]==0: #for erasing unused data if present
+                        assign_lst = [costID.type, costID.sub_type, costID.price,
+                        costID.pay_method, costID.start_date, costID.end_date,
+                        costID.company, costID.conf, costID.pointa, costID.pointb,
+                        costID.start_time, costID.end_time, costID.misc]
+                        assign_lst[n] = None #reassigns to blank variable so when saved won't be hiding in the background.
 
-
+            # pdb.set_trace()
 
     global vacations #only need because gui is inside main() and functions arent, can probably merge all later
     vacations = new_or_edit(filename)
@@ -632,7 +693,7 @@ if __name__ == '__main__':
 ##############################################################################
 
 
-#add change cost type option that trigers popup to confirm, reggenerates page, feeds current info into new one, wipes out unrelated data, and overwrites it in save data
+
 
 # TODO:  customize what prints in edit cost labels
 
@@ -648,4 +709,4 @@ if __name__ == '__main__':
 #have a add loging to transportation button for things like cruises. just for future tracking
 #
 
-## commit: adjusted save function to account for new blank files, removed un-needed additional files
+## commit: adding change type button and filter for display
