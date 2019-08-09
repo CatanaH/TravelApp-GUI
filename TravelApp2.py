@@ -17,21 +17,54 @@ food: price, datetime
 merch: item, location, price
 Fee:
 '''
-
+def verify_month(mon_date):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', '']
+    try:
+        print(mon_date)
+        mon_date = mon_date.capitalize()[:3]
+        if mon_date in months:
+            return mon_date
+        else:
+            return ''
+    except:
+        return ''
+def verify_day(day_date):
+    try:
+        if int(day_date)>0 and int(day_date)<=31:
+            return day_date
+        else: #possibly change to finally statement to catch all
+            return ''
+    except:
+        return ''
+    pass
+def verify_year(year_date):
+    try:
+        if int(year_date)>10 and int(year_date)<=99:#possibly set better date range
+            return year_date
+        else: #possibly change to finally statement to catch all
+            return ''
+    except:
+        return ''
+#possibly combine dates into one function
 
 class ReservedCost():
     def __init__(self, type, price = '', pay_method = '', pointa = '', #possibly remove this and only assign attr in editcost
-        start_date = '', start_time = '', pointb = '', end_date = '',
-        end_time = '', sub_type = '', conf = '', company = '', misc = ''
+        start_date_month = '',start_date_day = '',start_date_year = '',
+        start_time = '', pointb = '', end_date_month = '',end_date_day = '',
+        end_date_year = '', end_time = '', sub_type = '', conf = '', company = '', misc = ''
     ):
         self.type = type
         self.price = price
         self.pay_method = pay_method
         self.pointa = pointa
-        self.start_date = start_date
+        self.start_date_month = verify_month(start_date_month)
+        self.start_date_day = verify_day(start_date_day)
+        self.start_date_year = verify_year(start_date_year)
         self.start_time  =  start_time
         self.pointb = pointb
-        self.end_date = end_date
+        self.end_date_month = verify_month(end_date_month)
+        self.end_date_day = verify_day(end_date_day)
+        self.end_date_year = verify_year(end_date_year)
         self.end_time = end_time
         self.sub_type = sub_type
         self.conf = conf
@@ -40,17 +73,25 @@ class ReservedCost():
 
 
     def edit_cost(self,type, price = '', pay_method = '', pointa = '', #possibly remove '' i think all variables are being fed in, no blanks
-        start_date = '', start_time = '', pointb = '', end_date = '',
+        start_date_month = '',start_date_day = '',start_date_year = '',
+         start_time = '', pointb = '', end_date_month = '',end_date_day = '',end_date_year = '',
         end_time = '', sub_type = '', conf = '', company = '', misc = ''
     ):
         self.type = type
-        self.price = price
+        try:
+            self.price = float(price)
+        except:
+            self.price = ''
         self.pay_method = pay_method
         self.pointa = pointa
-        self.start_date = start_date
+        self.start_date_month = verify_month(start_date_month)
+        self.start_date_day = verify_day(start_date_day)
+        self.start_date_year = verify_year(start_date_year)
         self.start_time  =  start_time
         self.pointb = pointb
-        self.end_date = end_date
+        self.end_date_month = verify_month(end_date_month)
+        self.end_date_day = verify_day(end_date_day)
+        self.end_date_year = verify_year(end_date_year)
         self.end_time = end_time
         self.sub_type = sub_type
         self.conf = conf
@@ -61,10 +102,18 @@ class ReservedCost():
 
     def __str__(self):
         #CLI frame for EditCostPage
-        return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={}\nstart_time= {}\npointb= {}\nend_date= {}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
-            self.price, self.pay_method, self.pointa, self.start_date, \
-            self.start_time, self.pointb, self.end_date,self.end_time, \
-            self.sub_type, self.conf, self.company, self.misc))
+        try:
+            return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={}\nstart_time= {}\npointb= {}\nend_date= {}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
+                self.price, self.pay_method, self.pointa, self.start_date,
+                self.start_time, self.pointb, self.end_date,
+                self.end_time,
+                self.sub_type, self.conf, self.company, self.misc))
+        except:
+            return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={}/{}/{}\nstart_time= {}\npointb= {}\nend_date= {}/{}/{}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
+                self.price, self.pay_method, self.pointa, self.start_date_month,self.start_date_day,self.start_date_year,
+                self.start_time, self.pointb, self.end_date_month,self.end_date_day,self.end_date_year,
+                self.end_time,
+                self.sub_type, self.conf, self.company, self.misc))
 
 
 
@@ -83,26 +132,10 @@ class Trip():
         return self.destination + ': '+ date # +"budget: "+str(self.budget)
 
     def update_trip_title(self, tripname, mon_date, day_date, year_date, budget):
-        months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', '']
         self.destination = tripname
-        try:
-            mon_date = mon_date.capitalize()[:3]
-            if mon_date in months:
-                self.mon_date = mon_date
-        except:
-            self.mon_date = ''
-            ## TODO: add in error checking for mmm as str in list, and dd/yy as int
-        try:
-            if len(str(day_date)) <= 2:
-                self.day_date = day_date
-        except:
-            self.day_date = ''
-        try:
-            if len(str(year_date)) == 2:
-                self.year_date = year_date
-        except:
-            self.year_date = ''
-
+        self.mon_date=verify_month(mon_date)
+        self.day_date = verify_day(day_date)
+        self.year_date = verify_year(year_date)
         try: #must be number for later maths otherwise make blank
             self.budget = float(budget)
         except:
@@ -141,7 +174,6 @@ class Trip():
     def add_reserved_cost(self, **kwargs):
         x = ReservedCost(**kwargs)
         self.trip_plans.append(x)
-
 
     def remove_cost(self, vacations, costID):
         ## button on EditCostPage, triggers pop up to confirm, then redirects to TripDetailsPage
@@ -457,7 +489,7 @@ def main():
             Frame.__init__(self, parent)
 
             trip_name_var = StringVar()
-            start_date_var = StringVar()
+            # start_date_var = StringVar()
             budget_var = StringVar() #when intvar, breaks if char
 
             if locatorID != None:
@@ -539,6 +571,8 @@ def main():
 
             label = Label(self, text = "View list of trip costs here:")
             label.grid()
+            label2 = Label(self, text = locatorID.__str__())
+            label2.grid(row=0,column=1)
             if locatorID != None:
                 for n, cost in enumerate(locatorID.trip_plans):
                     label = Label(self, text = cost.__str__()) ## TODO: add more print details
@@ -584,8 +618,8 @@ def main():
             button1.grid(row = 1, column = 0)
             button2 = Button(self, text = "SAVE", command = lambda: controller.refresh_show_frame(TripDetailsPage,
                 save_cost(locatorID, costID, type = type, price = price.get(), pay_method = pay_method.get(),
-                pointa = pointa.get(), start_date = start_date.get(), start_time = start_time.get(),
-                pointb = pointb.get(), end_date = end_date.get(), end_time = end_time.get(), sub_type = sub_type.get(),
+                pointa = pointa.get(), start_date_month = start_date.mon_date.get() ,start_date_day = start_date.day_date.get(),start_date_year = start_date.year_date.get(), start_time = start_time.get(),
+                pointb = pointb.get(), end_date_month = end_date.mon_date.get() ,end_date_day = end_date.day_date.get(),end_date_year = end_date.year_date.get(), end_time = end_time.get(), sub_type = sub_type.get(),
                 conf = conf.get(), company = company.get(), misc = misc.get())))
             button2.grid(row = 1, column = 1)
 
@@ -593,7 +627,7 @@ def main():
             if locatorID != None:
                 button_del = Button(self, text = "DELETE Cost Item",
                     command = lambda: popup_dlt_cost_conf(controller, vacations, locatorID, costID))
-                button_del.grid(row = 1, column = 2)
+                button_del.grid(row = 1, column = 2)#should this be costID? todo
 
             # #######################labels and entry fields ################################
             med_font = ('arial', 14)
@@ -601,8 +635,8 @@ def main():
             type = type
             price = StringVar()
             pay_method = StringVar()
-            start_date = StringVar()
-            end_date = StringVar()
+            start_date = DateEntry(self)
+            end_date = DateEntry(self)
             company = StringVar()
             conf = StringVar()
             pointa = StringVar()
@@ -655,30 +689,45 @@ def main():
                             label = Label(self, font = med_font, text = type)
                             label.grid(row = row, column = col+1, sticky = "E")
                             button = Button(self, text = "Change Cost Type", command=lambda:[ costID.edit_cost(type = type, price = price.get(), pay_method = pay_method.get(),
-                            pointa = pointa.get(), start_date = start_date.get(), start_time = start_time.get(),
-                            pointb = pointb.get(), end_date = end_date.get(), end_time = end_time.get(), sub_type = sub_type.get(),
+                            pointa = pointa.get(), start_date_month = start_date.mon_date.get() ,start_date_day = start_date.day_date.get(),start_date_year = start_date.year_date.get(),
+                            start_time = start_time.get(), pointb = pointb.get(), end_date_month = end_date.mon_date.get() ,end_date_day = end_date.day_date.get(),end_date_year = end_date.year_date.get(),                   end_time = end_time.get(), sub_type = sub_type.get(),
                             conf = conf.get(), company = company.get(), misc = misc.get()),popup_change_costtype(controller,locatorID,costID)])
                             button.grid(row = row, column = col)
                         else:
                             label = Label(self, font = med_font, text = x)# TODO: change to what type of ...+ for subtype
                             label.grid(row = row, column = col, sticky = "E")
-                            entry = Entry(self, font = med_font, width = 20, bd = 2, insertwidth = 2, textvariable = label_entry_dict[x])
-                            entry.grid(row = row, column = col+1)
-                            if costID != None:
-                                try: # TODO: move where this list is stored
-                                    assign_lst = [costID.type, costID.sub_type, costID.price,
-                                    costID.pay_method, costID.start_date, costID.end_date,
-                                    costID.company, costID.conf, costID.pointa, costID.pointb,
-                                    costID.start_time, costID.end_time, costID.misc]
-                                    entry.insert(0, str(assign_lst[n]))
+                            if x == 'start_date' or x == 'end_date':  #creates date field instead of text entry
+                                label_entry_dict[x].grid(row = row, column = col+1)
+                                try:
+                                    if x == 'start_date':
+                                        start_date.mon_date_entry.insert(0, costID.start_date_month)
+                                        start_date.day_date_entry.insert(0, costID.start_date_day)
+                                        start_date.year_date_entry.insert(0, costID.start_date_year)
+                                    else:
+                                        end_date.mon_date_entry.insert(0, costID.end_date_month)
+                                        end_date.day_date_entry.insert(0, costID.end_date_day)
+                                        end_date.year_date_entry.insert(0, costID.end_date_year)
                                 except AttributeError:
                                     continue
+                            else:  #creates basic text entry
+                                entry = Entry(self, font = med_font, width = 20, bd = 2, insertwidth = 2, textvariable = label_entry_dict[x])
+                                entry.grid(row = row, column = col+1)
+                                if costID != None:
+                                    try: # TODO: move where this list is stored
+                                        assign_lst = [costID.type, costID.sub_type, costID.price,
+                                        costID.pay_method, '','', costID.company, costID.conf, costID.pointa, costID.pointb,
+                                        costID.start_time, costID.end_time, costID.misc]
+                                        entry.insert(0, str(assign_lst[n]))
+                                    except AttributeError:
+                                        continue
                     elif activate_entry[n]==0: #for erasing unused data if present
                         assign_lst = [costID.type, costID.sub_type, costID.price,
-                        costID.pay_method, costID.start_date, costID.end_date,
+                        costID.pay_method, (costID.start_date_month,costID.start_date_day,costID.start_date_year),
+                        (costID.end_date_month,costID.end_date_day,costID.end_date_year), 
                         costID.company, costID.conf, costID.pointa, costID.pointb,
                         costID.start_time, costID.end_time, costID.misc]
-                        assign_lst[n] = None #reassigns to blank variable so when saved won't be hiding in the background.
+                        for x in assign_lst[n]:
+                            x = None #reassigns to blank variable so when saved won't be hiding in the background.
 
             # pdb.set_trace()
 
@@ -697,6 +746,7 @@ if __name__ == '__main__':
 
 # TODO:  customize what prints in edit cost labels
 
+# TODO: add misc field to trip edit
 # TODO: add date fields to edit cost page dates
 # TODO: sort trip details by date
 # TODO: make trip details display nicer, easier to read.
@@ -709,4 +759,4 @@ if __name__ == '__main__':
 #have a add loging to transportation button for things like cruises. just for future tracking
 #
 
-## commit: adding change type button and filter for display
+## commit:
