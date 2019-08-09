@@ -17,35 +17,6 @@ food: price, datetime
 merch: item, location, price
 Fee:
 '''
-def verify_month(mon_date):
-    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', '']
-    try:
-        print(mon_date)
-        mon_date = mon_date.capitalize()[:3]
-        if mon_date in months:
-            return mon_date
-        else:
-            return ''
-    except:
-        return ''
-def verify_day(day_date):
-    try:
-        if int(day_date)>0 and int(day_date)<=31:
-            return day_date
-        else: #possibly change to finally statement to catch all
-            return ''
-    except:
-        return ''
-    pass
-def verify_year(year_date):
-    try:
-        if int(year_date)>10 and int(year_date)<=99:#possibly set better date range
-            return year_date
-        else: #possibly change to finally statement to catch all
-            return ''
-    except:
-        return ''
-#possibly combine dates into one function
 
 class ReservedCost():
     def __init__(self, type, price = '', pay_method = '', pointa = '', #possibly remove this and only assign attr in editcost
@@ -102,18 +73,11 @@ class ReservedCost():
 
     def __str__(self):
         #CLI frame for EditCostPage
-        try:
-            return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={}\nstart_time= {}\npointb= {}\nend_date= {}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
-                self.price, self.pay_method, self.pointa, self.start_date,
-                self.start_time, self.pointb, self.end_date,
-                self.end_time,
-                self.sub_type, self.conf, self.company, self.misc))
-        except:
-            return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={}/{}/{}\nstart_time= {}\npointb= {}\nend_date= {}/{}/{}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
-                self.price, self.pay_method, self.pointa, self.start_date_month,self.start_date_day,self.start_date_year,
-                self.start_time, self.pointb, self.end_date_month,self.end_date_day,self.end_date_year,
-                self.end_time,
-                self.sub_type, self.conf, self.company, self.misc))
+        return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={} {}-{}\nstart_time= {}\npointb= {}\nend_date= {} {}-{}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
+            self.price, self.pay_method, self.pointa, self.start_date_month,self.start_date_day,self.start_date_year,
+            self.start_time, self.pointb, self.end_date_month,self.end_date_day,self.end_date_year,
+            self.end_time,
+            self.sub_type, self.conf, self.company, self.misc))
 
 
 
@@ -131,7 +95,7 @@ class Trip():
             date = 'none'
         return self.destination + ': '+ date # +"budget: "+str(self.budget)
 
-    def update_trip_title(self, tripname, mon_date, day_date, year_date, budget):
+    def update_trip_title(self, tripname, mon_date, day_date, year_date, budget, note):
         self.destination = tripname
         self.mon_date=verify_month(mon_date)
         self.day_date = verify_day(day_date)
@@ -140,6 +104,7 @@ class Trip():
             self.budget = float(budget)
         except:
             self.budget = ''
+        self.note=note
 
     def trip_total_price(self):
         #loops to grab price int and add them together
@@ -188,6 +153,37 @@ class Trip():
 '''
 ############## functions ################
 '''
+def verify_month(mon_date):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', '']
+    try:
+        print(mon_date)
+        mon_date = mon_date.capitalize()[:3]
+        if mon_date in months:
+            return mon_date
+        else:
+            return ''
+    except:
+        return ''
+def verify_day(day_date):
+    try:
+        if int(day_date)>0 and int(day_date)<=31:
+            return day_date
+        else: #possibly change to finally statement to catch all
+            return ''
+    except:
+        return ''
+    pass
+def verify_year(year_date):
+    try:
+        if int(year_date)>10 and int(year_date)<=99:#possibly set better date range
+            return year_date
+        else: #possibly change to finally statement to catch all
+            return ''
+    except:
+        return ''
+#possibly combine dates into one function
+
+
 def load_trip_files(filename):
     with open(filename, 'rb') as f:
         vacations = pickle.load(f)
@@ -214,6 +210,24 @@ def sort_trips_descending(trip_list):
     return(trip_list)
 
 
+def sort_costs_descending(trip_list):
+    months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', '']
+    trips_no_date = []#add to end of sorted list
+    trips_with_dates = [] #collect obj to sort
+    for trip in trip_list:
+        try:
+            x = (trip.start_date_month, trip.start_date_day, trip.start_date_year)
+            if trip.start_date_month not in months: ## TODO: possibly remove if error check in init catches this
+                trip.start_date_month =''
+            trips_with_dates.append(trip)
+        except AttributeError:
+            trips_no_date.append(trip)
+
+    trip_list = sorted(trips_with_dates, key = lambda v: ( v.start_date_year, months.index(v.start_date_month), v.start_date_day))
+    trip_list.extend(trips_no_date)
+    return(trip_list)
+
+
 def new_or_edit(filename):
     try:
         trip_list = load_trip_files(filename)
@@ -226,36 +240,29 @@ def new_or_edit(filename):
 
 def save_cost(locatorID, costID, **kwargs):
     if type(costID)!= str and type(costID) != None: ## TODO: figure out how to test for obj type, to simpify this if statement
-        #to overwrite existing ones
-        # costID.edit_cost(**kwargs)
         if costID not in locatorID.trip_plans: #checks if obj not in trip list
-            print("appending new cost")
-            # pdb.set_trace()
             costID.edit_cost(**kwargs)
             locatorID.trip_plans.append(costID)
         else:
-            print('catching here')
-            costID.edit_cost(**kwargs)
+            costID.edit_cost(**kwargs) #to overwrite existing ones
     elif type(costID) == str:#to create new cost obj
-        print("Creating new cost")
         locatorID.add_reserved_cost(**kwargs)
     else:
-        #maybe popup saying didnt work?
-        print('passing thru else statement line 209')
+        print('passing thru else statement line 209')#maybe popup saying didnt work?
         pass
-    print("saving cost")
+    locatorID.trip_plans = sort_costs_descending(locatorID.trip_plans)
     save_trip_list(vacations, filename)  #comment outwhile testing to prevent bad data saves
     return locatorID
 
 
-def save_trip(locatorID, tripName, mon_date, day_date, year_date, budget, controller = None):
+def save_trip(locatorID, tripName, mon_date, day_date, year_date, budget, note, controller = None):
     try: #makes sure all data is proper then redirects; except catches errors and does popups
         if locatorID == None: #to create a new trip obj
             trip = Trip()
-            trip.update_trip_title(tripName, mon_date, day_date, year_date, budget)
+            trip.update_trip_title(tripName, mon_date, day_date, year_date, budget, note)
             locatorID = trip #provides new locator ID to work with
         else:
-            locatorID.update_trip_title(tripName, mon_date, day_date, year_date, budget)
+            locatorID.update_trip_title(tripName, mon_date, day_date, year_date, budget, note)
 
         create_vacaylist_for_save(vacations, locatorID)
         save_trip_list(vacations, filename)  #comment outwhile testing to prevent bad data saves
@@ -489,8 +496,8 @@ def main():
             Frame.__init__(self, parent)
 
             trip_name_var = StringVar()
-            # start_date_var = StringVar()
             budget_var = StringVar() #when intvar, breaks if char
+            note_var = StringVar()
 
             if locatorID != None:
                 prev_pg = TripDetailsPage
@@ -506,18 +513,18 @@ def main():
             if locatorID != None:
                 button_del = Button(self, text = "DELETE entire trip",
                             command = lambda: popup_dlt_trip_conf(controller, vacations, locatorID))
-                button_del.grid(row = 5, column = 0)
+                button_del.grid(row = 6, column = 0)
 
             button1 = Button(self, text = "CANCEL",
                         command = lambda:[controller.refresh_show_frame(prev_pg, locatorID)])
-            button1.grid(row = 4, column = 0)
+            button1.grid(row = 5, column = 0)
 
             button2 = Button(self, text = "SAVE", state = 'disabled', command = lambda:
                 controller.refresh_show_frame(TripDetailsPage, save_trip(
                 locatorID, trip_name_var.get(), start_date_entry.mon_date.get(),
                 start_date_entry.day_date.get(), start_date_entry.year_date.get(),
-                budget_var.get())))
-            button2.grid(row = 4, column = 1)
+                budget_var.get(), note_var.get())))
+            button2.grid(row = 5, column = 1)
 
             def savebtn_active(event):
                 if event.keysym == 'BackSpace': #reads count before button press, had to add this to count right
@@ -547,6 +554,12 @@ def main():
             budget_entry = Entry(self, font = ('arial', 14), width = 20, bd = 2, insertwidth = 2, textvariable = budget_var)
             budget_entry.grid(row = 3, column = 1)
             # budget_entry.insert(0,'$ ') ## TODO: displays $ disapears when typing, change to greyed out one that stays?
+
+            misc_label = Label(self, font = ('arial', 12), text = 'Trip Notes:')
+            misc_label.grid(row = 4, sticky = "E")
+            misc_entry = Entry(self, font = ('arial', 14), bd = 2, insertwidth = 2, textvariable = note_var)
+            misc_entry.grid(row = 4, column = 1)
+
             if locatorID != None:
                 button2.config(state = 'active')
                 trip_name_entry.insert(0, locatorID.destination)
@@ -561,6 +574,11 @@ def main():
                     pass
                 try:
                     budget_entry.insert(0, locatorID.budget)
+                except:
+                    pass
+
+                try:
+                    misc_entry.insert(0, locatorID.note)
                 except:
                     pass
 
@@ -723,13 +741,13 @@ def main():
                     elif activate_entry[n]==0: #for erasing unused data if present
                         assign_lst = [costID.type, costID.sub_type, costID.price,
                         costID.pay_method, (costID.start_date_month,costID.start_date_day,costID.start_date_year),
-                        (costID.end_date_month,costID.end_date_day,costID.end_date_year), 
+                        (costID.end_date_month,costID.end_date_day,costID.end_date_year),
                         costID.company, costID.conf, costID.pointa, costID.pointb,
                         costID.start_time, costID.end_time, costID.misc]
                         for x in assign_lst[n]:
                             x = None #reassigns to blank variable so when saved won't be hiding in the background.
 
-            # pdb.set_trace()
+
 
     global vacations #only need because gui is inside main() and functions arent, can probably merge all later
     vacations = new_or_edit(filename)
@@ -742,21 +760,18 @@ if __name__ == '__main__':
 ##############################################################################
 
 
-
-
 # TODO:  customize what prints in edit cost labels
 
-# TODO: add misc field to trip edit
-# TODO: add date fields to edit cost page dates
-# TODO: sort trip details by date
+
 # TODO: make trip details display nicer, easier to read.
 # TODO: build tests to automate and check when i make changes
 # TODO: add scroll bar to long pages
 # TODO: make the whole thing look nicer with styling
 # TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it for both edit pages
+# TODO: possibly switch over to database not pkl file
 
 #should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
 #have a add loging to transportation button for things like cruises. just for future tracking
 #
 
-## commit:
+## commit: added date fields to edit cost page. added note field to trip, added sort feature to cost list
