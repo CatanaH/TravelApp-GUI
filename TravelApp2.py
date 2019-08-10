@@ -72,12 +72,13 @@ class ReservedCost():
 
 
     def __str__(self):
-        #CLI frame for EditCostPage
-        return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={} {}-{}\nstart_time= {}\npointb= {}\nend_date= {} {}-{}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
-            self.price, self.pay_method, self.pointa, self.start_date_month,self.start_date_day,self.start_date_year,
-            self.start_time, self.pointb, self.end_date_month,self.end_date_day,self.end_date_year,
-            self.end_time,
-            self.sub_type, self.conf, self.company, self.misc))
+        return(("{}\t\t{}\n{}\t\t{}\t\t${}").format(
+        self.sub_type,self.company,self.pointa,self.start_time,self.price))
+        # return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={} {}-{}\nstart_time= {}\npointb= {}\nend_date= {} {}-{}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
+        #     self.price, self.pay_method, self.pointa, self.start_date_month,self.start_date_day,self.start_date_year,
+        #     self.start_time, self.pointb, self.end_date_month,self.end_date_day,self.end_date_year,
+        #     self.end_time,
+        #     self.sub_type, self.conf, self.company, self.misc))
 
 
 
@@ -93,7 +94,7 @@ class Trip():
             date = self.mon_date+' '+str(self.day_date)+'/'+str(self.year_date)
         except AttributeError:
             date = 'none'
-        return self.destination + ': '+ date # +"budget: "+str(self.budget)
+        return self.destination + '\n'+ date # +"budget: "+str(self.budget)
 
     def update_trip_title(self, tripname, mon_date, day_date, year_date, budget, note):
         self.destination = tripname
@@ -475,21 +476,41 @@ def main():
     class TripListPage(Frame):
         def __init__(self, parent, controller,locatorID=None, costID=None):
             Frame.__init__(self, parent)
+            self.canvas = Canvas(self, borderwidth=0,height=500)
+            self.frame = Frame(self.canvas)
+            self.vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
+            self.canvas.configure(yscrollcommand=self.vsb.set)
+            self.vsb.grid(row=0,column=1,sticky='ns')
+            self.canvas.grid(row=0,column=0)
+            self.canvas.create_window((4,4), window=self.frame, anchor="nw",
+                                      tags="self.frame")
+            self.frame.bind("<Configure>", self.onFrameConfigure)
+            self.canvas.bind_all("<MouseWheel>", self.on_mousewheel)
 
-            button = Button(self, text = "ADD a new trip",
+            #######  contents #########
+            photo = PhotoImage(file='Airplane_basicsm.png') # TODO: photo will be optional for user to customize
+            button_config={'image':photo,'height':50,'width':365,'compound':'left','bd':6,'justify':'left','anchor':'w'}
+            add_button = Button(self.frame, text = "ADD a new trip",
                                 command = lambda: controller.refresh_show_frame(EditTripPage)) #testing, no set to correct destination temp.
-            button.grid(row = 0, column = 0)
+            add_button.grid(row = 0, column = 0)
 
             try:
                 for n, trip in enumerate(sort_trips_descending(vacations)):
-                    label = Label(self, text = trip.__str__())
-                    label.grid(row = (n+1), column = 0, sticky = 'W')
-                    button2  =  Button(self, text = "EDIT existing trip",
-                            command = lambda trip = trip: controller.refresh_show_frame(TripDetailsPage, locatorID = trip))
-                    button2.grid(row = (n+1), column = 1)
+                    trip_button  =  Button(self.frame, text = trip.__str__(),
+                            command = lambda trip = trip: controller.refresh_show_frame(
+                            TripDetailsPage, locatorID = trip),**button_config)
+                    trip_button.image = photo
+                    trip_button.grid(row = (n+1))
             except TypeError:
                 pass ## TODO: add label saying no vacays, click add to et started
 
+        ######## Methods ##########
+        def on_mousewheel(self, event):
+            self.canvas.yview_scroll(-1*int(event.delta/60), "units")
+
+        def onFrameConfigure(self, event):
+            '''Reset the scroll region to encompass the inner frame'''
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     class EditTripPage(Frame):
         def __init__(self, parent, controller, locatorID = None, costID = None):
@@ -586,32 +607,80 @@ def main():
     class TripDetailsPage(Frame):
         def __init__(self, parent, controller, locatorID=None, costID=None):
             Frame.__init__(self, parent)
+            self.canvas = Canvas(self, borderwidth=0,height=450)
+            self.frame = Frame(self.canvas)
+            self.vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
+            self.canvas.configure(yscrollcommand=self.vsb.set)
+            self.vsb.grid(row=1,column=1,sticky='ns')
+            self.canvas.grid(row=1,column=0)
+            self.canvas.create_window((4,4), window=self.frame, anchor="nw",
+                                      tags="self.frame")
+            self.frame.bind("<Configure>", self.onFrameConfigure)
+            self.frame.bind("<MouseWheel>", self._on_mousewheel)
+            photo = PhotoImage(file='Airplane_basicsm.png')
+            cost_btn_config={'image':photo,'height':50,'width':365,'compound':'left','bd':6,'justify':'left','anchor':'w'}
 
-            label = Label(self, text = "View list of trip costs here:")
-            label.grid()
-            label2 = Label(self, text = locatorID.__str__())
-            label2.grid(row=0,column=1)
             if locatorID != None:
-                for n, cost in enumerate(locatorID.trip_plans):
-                    label = Label(self, text = cost.__str__()) ## TODO: add more print details
-                    label.grid(row = (1+n), column = 0)
-                    button4 = Button(self, text = "EDIT existing cost",
-                                command = lambda cost = cost: controller.refresh_show_frame(EditCostPage, locatorID, cost))
-                    button4.grid(row = (1+n), column = 1)
+                ######### trip Header ##########
+                headcl='#B1DEFA'
+                self.headerf = Frame(self,bg=headcl)
+                self.headerf.grid(row=0,column=0)
+                dest_l = Label(self.headerf, text = locatorID.destination,
+                    bg=headcl,height=1,padx=20, font=('arial', 22))
+                dest_l.grid(row=0,column=0,columnspan=3)
+                date_l = Label(self.headerf, text = '{} {}/{}'.format(
+                    locatorID.mon_date,locatorID.day_date,locatorID.year_date),
+                    bg=headcl,width=50)
+                date_l.grid(row=1,column=0,columnspan=3)
+                try:
+                    note_l = Label(self.headerf, text = locatorID.note,
+                        bg=headcl,height=2,width=50)
+                except:
+                    note_l = Label(self.headerf, text = '',
+                        bg=headcl,height=2,width=50)
+                note_l.grid(row=2,column=0,columnspan=3)
 
-            button1 = Button(self, text = "Back to Home(DONE)",  #pop up to confirm then redirects page
-                            command = lambda: controller.refresh_show_frame(TripListPage))
-            button1.grid(row = 0, column = 3)
-            button2 = Button(self, text = "EDIT trip details",
-                            command = lambda: controller.refresh_show_frame(EditTripPage, locatorID = locatorID))
-            button2.grid(row = 1, column = 3)
-            button3 = Button(self, text = "ADD new cost",  #pop up asks what kind of cost
-                            command = lambda: popup_costtype(controller, 'pick a cost', locatorID))
-                            #controller.refresh_show_frame(EditCostPage,locatorID = locatorID)
-            button3.grid(row = 2, column = 3)
-            if locatorID != None:
-                label = Label(self, text = locatorID.within_budget_check())
+                label = Label(self.frame, text = locatorID.within_budget_check())
                 label.grid(row = 3, column = 3)
+                ######### cost buttons ##########
+                if locatorID != None:
+                    for n, cost in enumerate(locatorID.trip_plans):
+                        # label = Label(self.frame, text = ) ## TODO: add more print details
+                        # label.grid(row = (1+n), column = 0)
+                        cost_button = Button(self.frame, text = cost.__str__(),
+                                    command = lambda cost = cost: controller.refresh_show_frame(
+                                    EditCostPage, locatorID, cost),**cost_btn_config)
+                        cost_button.image = photo
+                        cost_button.grid(row = (1+n), column = 1)
+
+
+            ###### Bottom Buttons #######
+            self.directoryf = Frame(self,bg='#1A6493')
+            self.directoryf.grid(row=3,column=0)
+
+            cost_btn_config={'width':10,'bg':'#145075','fg':'#D0E0EA'}
+
+            back_btn = Button(self.directoryf, text = "Back",  #pop up to confirm then redirects page
+                            command = lambda: controller.refresh_show_frame(TripListPage),**cost_btn_config)
+            back_btn.grid(row = 0, column = 0,padx=23,pady=10)
+            edit_btn = Button(self.directoryf, text = "EDIT",
+                            command = lambda: controller.refresh_show_frame(EditTripPage, locatorID = locatorID),**cost_btn_config)
+            edit_btn.grid(row = 0, column = 2,padx=22,pady=10)
+            add_btn = Button(self.directoryf, text = "ADD COST",  #pop up asks what kind of cost
+                            command = lambda: popup_costtype(controller, 'pick a cost', locatorID),**cost_btn_config)
+                            #controller.refresh_show_frame(EditCostPage,locatorID = locatorID)
+            add_btn.grid(row = 0, column = 1,padx=22,pady=10)
+
+
+        ######### functions #########
+        def _on_mousewheel(self, event):
+            self.canvas.yview_scroll(-1*int(event.delta/60), "units")
+
+        def onFrameConfigure(self, event):
+            '''Reset the scroll region to encompass the inner frame'''
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+
 
 
     class EditCostPage(Frame):
@@ -752,26 +821,27 @@ def main():
     global vacations #only need because gui is inside main() and functions arent, can probably merge all later
     vacations = new_or_edit(filename)
     root = TravelApp()
-    # root.geometry('500x600') #window is auto sizing, this isnt currently needed
+    root.geometry('400x600+600+20') #window size+ screen placement
     root.mainloop()
 
 if __name__ == '__main__':
     main()
 ##############################################################################
 
+#trip details page add in budget costs next
+
 
 # TODO:  customize what prints in edit cost labels
 
-
-# TODO: make trip details display nicer, easier to read.
 # TODO: build tests to automate and check when i make changes
-# TODO: add scroll bar to long pages
+
 # TODO: make the whole thing look nicer with styling
 # TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it for both edit pages
 # TODO: possibly switch over to database not pkl file
 
 #should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
 #have a add loging to transportation button for things like cruises. just for future tracking
-#
+#add sort for cost by cost type, maybe add a buisinees/personal field,day
 
-## commit: added date fields to edit cost page. added note field to trip, added sort feature to cost list
+## commit: added scroll bar to triplistpage and tripdetails page,customized buttons on triplistpage and
+        #trip details page, added header and footoer to triplist page
