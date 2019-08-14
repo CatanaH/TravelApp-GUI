@@ -1,5 +1,5 @@
 import pickle
-import pdb  #python debugger. use pdb.set_trace()
+import pdb  # python debugger. use pdb.set_trace()
 filename = "pckl_test_file.pkl"
 '''
 travel app;
@@ -122,19 +122,17 @@ class Trip():
     def within_budget_check(self):
         try:
             self.budget = float(self.budget)
-        # if type(self.budget) == int or type(self.budget)==float:
             total = self.trip_total_price()
             if self.budget > total:
                 remaining = self.budget-total
-                return("Running Total=${t} Budget=${b} You have ${r} remaining".format(t = total, b = self.budget, r = remaining))
+                return"Remaining: ${}".format(remaining)
             else:
                 remaining = total-self.budget
-                return("Running Total=${t} Budget=${b} You are ${r} over budget".format(t = total, b = self.budget, r = remaining))
+                return"Over Budget: ${}".format(remaining)
 
-        except AttributeError:
-            return("error doesnt have a budget")
-        except ValueError:
-            return("Budget must be a number")
+        except (AttributeError, ValueError):
+            return " "
+
 
     #####edit travel plans here####
     def add_reserved_cost(self, **kwargs):
@@ -182,7 +180,7 @@ def verify_year(year_date):
             return ''
     except:
         return ''
-#possibly combine dates into one function
+# possibly combine dates into one function
 
 
 def load_trip_files(filename):
@@ -443,9 +441,9 @@ def main():
             Tk.__init__(self, *args, **kwargs)
 
             self.container = Frame(self)
-            self.container.pack(side = "top", fill = "both", expand = True)
-            self.container.grid_rowconfigure(0, weight = 1)
-            self.container.grid_columnconfigure(0, weight = 1)
+            self.container.pack(side="top", fill="both", expand=True)
+            self.container.grid_rowconfigure(0, weight=1)
+            self.container.grid_columnconfigure(0, weight=1)
 
             self.frames = {}
             for F in (TripListPage, EditTripPage, TripDetailsPage, EditCostPage):
@@ -462,7 +460,6 @@ def main():
         def refresh_show_frame(self, cont, locatorID = None, costID = None):
             self.refresh_frame(cont, locatorID, costID)
             self.show_frame(cont)
-
 
         def refresh_frame(self, cont, locatorID, costID):
             frame = self.frames[cont]
@@ -607,7 +604,7 @@ def main():
     class TripDetailsPage(Frame):
         def __init__(self, parent, controller, locatorID=None, costID=None):
             Frame.__init__(self, parent)
-            self.canvas = Canvas(self, borderwidth=0,height=450)
+            self.canvas = Canvas(self, borderwidth=0, height=450)
             self.frame = Frame(self.canvas)
             self.vsb = Scrollbar(self, orient="vertical", command=self.canvas.yview)
             self.canvas.configure(yscrollcommand=self.vsb.set)
@@ -618,7 +615,7 @@ def main():
             self.frame.bind("<Configure>", self.onFrameConfigure)
             self.frame.bind("<MouseWheel>", self._on_mousewheel)
             photo = PhotoImage(file='Airplane_basicsm.png')
-            cost_btn_config={'image':photo,'height':50,'width':365,'compound':'left','bd':6,'justify':'left','anchor':'w'}
+            cost_btn_config={'image': photo, 'height': 50, 'width': 365, 'compound': 'left', 'bd': 6, 'justify': 'left', 'anchor': 'w'}
 
             if locatorID != None:
                 ######### trip Header ##########
@@ -627,21 +624,36 @@ def main():
                 self.headerf.grid(row=0,column=0)
                 dest_l = Label(self.headerf, text = locatorID.destination,
                     bg=headcl,height=1,padx=20, font=('arial', 22))
-                dest_l.grid(row=0,column=0,columnspan=3)
+                dest_l.grid(row=0)
                 date_l = Label(self.headerf, text = '{} {}/{}'.format(
                     locatorID.mon_date,locatorID.day_date,locatorID.year_date),
                     bg=headcl,width=50)
-                date_l.grid(row=1,column=0,columnspan=3)
+                date_l.grid(row=1)
                 try:
-                    note_l = Label(self.headerf, text = locatorID.note,
+                    note_l = Label(self.headerf, text=locatorID.note,
                         bg=headcl,height=2,width=50)
                 except:
-                    note_l = Label(self.headerf, text = '',
-                        bg=headcl,height=2,width=50)
-                note_l.grid(row=2,column=0,columnspan=3)
+                    note_l = Label(self.headerf, text='',
+                                   bg=headcl,height=2,width=50)
+                note_l.grid(row=2)
 
-                label = Label(self.frame, text = locatorID.within_budget_check())
-                label.grid(row = 3, column = 3)
+                budgetcl = '#F8AC39'
+                self.budgetf = Frame(self.headerf, bg=budgetcl)
+                self.budgetf.grid(row=3, sticky='ew')
+
+                budget_l = Label(self.budgetf, text=('Budget: $ ' + str(locatorID.budget)), bg=budgetcl, width=17)
+                budget_l.grid(row=0, column=0)
+
+                total_l = Label(self.budgetf, text=('Total Cost: $ ' + str(locatorID.trip_total_price())), bg=budgetcl, width=17)
+                total_l.grid(row=0,column=1)
+
+                compare_l = Label(self.budgetf, text=locatorID.within_budget_check(), bg=budgetcl, width=17)
+                compare_l.grid(row=0,column=2)
+
+
+
+
+
                 ######### cost buttons ##########
                 if locatorID != None:
                     for n, cost in enumerate(locatorID.trip_plans):
@@ -651,7 +663,7 @@ def main():
                                     command = lambda cost = cost: controller.refresh_show_frame(
                                     EditCostPage, locatorID, cost),**cost_btn_config)
                         cost_button.image = photo
-                        cost_button.grid(row = (1+n), column = 1)
+                        cost_button.grid(row=(1+n), column=1)
 
 
             ###### Bottom Buttons #######
@@ -679,8 +691,6 @@ def main():
         def onFrameConfigure(self, event):
             '''Reset the scroll region to encompass the inner frame'''
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-
 
 
     class EditCostPage(Frame):
@@ -818,17 +828,16 @@ def main():
 
 
 
-    global vacations #only need because gui is inside main() and functions arent, can probably merge all later
+    global vacations # only need because gui is inside main() and functions arent, can probably merge all later
     vacations = new_or_edit(filename)
     root = TravelApp()
-    root.geometry('400x600+600+20') #window size+ screen placement
+    root.geometry('400x620+600+20')  # window size+ screen placement
     root.mainloop()
 
 if __name__ == '__main__':
     main()
 ##############################################################################
 
-#trip details page add in budget costs next
 
 
 # TODO:  customize what prints in edit cost labels
@@ -839,9 +848,8 @@ if __name__ == '__main__':
 # TODO: figure out how to pass an event into the save btn_active so i dont have to rewrite it for both edit pages
 # TODO: possibly switch over to database not pkl file
 
-#should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
-#have a add loging to transportation button for things like cruises. just for future tracking
-#add sort for cost by cost type, maybe add a buisinees/personal field,day
+#TODO:should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
+#TODO:have a add loging to transportation button for things like cruises. just for future tracking
+#TODO:add sort for cost by cost type, maybe add a buisinees/personal field,day
 
-## commit: added scroll bar to triplistpage and tripdetails page,customized buttons on triplistpage and
-        #trip details page, added header and footoer to triplist page
+## commit: cleaned up budget printing
