@@ -51,6 +51,14 @@ class ReservedCost():
         self.company = company
         self.misc = misc
 
+        tlogo_dict = {'Transportation': 'Airplane_basicsm.png',
+                      'Lodging': 'Airplane_basicsm.png',
+                      'Event':'Airplane_basicsm.png',
+                      'Meal': 'Airplane_basicsm.png',
+                      'Merchandise': 'Airplane_basicsm.png',
+                      'Fee': 'Airplane_basicsm.png'}
+        self.type_logo = tlogo_dict[type]
+
     def __str__(self):
         return (("{}\t\t{}\n{}\t\t{}\t\t${}").format(
             self.sub_type, self.company, self.pointa, self.start_time, self.price))
@@ -75,18 +83,20 @@ class Trip():
             date = 'none'
         return self.destination + '\n' + date  # +"budget: "+str(self.budget)
 
-    def update_trip_title(self, tripname, mon_date, day_date, year_date, budget, note):
+    def update_trip_title(self, tripname, mon_date, day_date, year_date, end_mon, end_day, end_year, budget, note):
         self.destination = tripname
         self.mon_date = verify_month(mon_date)
         self.mon_color = self.assign_color(self.mon_date)
         self.day_date = verify_day(day_date)
         self.year_date = verify_year(year_date)
+        self.end_mon = verify_month(end_mon)
+        self.end_day = verify_day(end_day)
+        self.end_year = verify_year(end_year)
         try:  # must be number for later maths otherwise make blank
             self.budget = round(float(budget), 2)
         except:
             self.budget = ''
         self.note = note
-        print(self.mon_color)
 
     def trip_total_price(self):
         # loops to grab price int and add them together
@@ -195,8 +205,6 @@ def verify_year(year_date):
             return ''
     except:
         return ''
-
-
 # possibly combine dates into one function
 
 
@@ -274,14 +282,14 @@ def save_cost(locatorID, costID, **kwargs):
     return locatorID
 
 
-def save_trip(locatorID, tripName, mon_date, day_date, year_date, budget, note, controller=None):
+def save_trip(locatorID, tripName, mon_date, day_date, year_date, end_mon, end_day, end_year, budget, note, controller=None):
     try:  # makes sure all data is proper then redirects; except catches errors and does popups
         if locatorID == None:  # to create a new trip obj
             trip = Trip()
-            trip.update_trip_title(tripName, mon_date, day_date, year_date, budget, note)
+            trip.update_trip_title(tripName, mon_date, day_date, year_date, end_mon, end_day, end_year,budget, note)
             locatorID = trip  # provides new locator ID to work with
         else:
-            locatorID.update_trip_title(tripName, mon_date, day_date, year_date, budget, note)
+            locatorID.update_trip_title(tripName, mon_date, day_date, year_date, end_mon, end_day, end_year, budget, note)
 
         create_vacaylist_for_save(vacations, locatorID)
         save_trip_list(vacations, filename)  # comment outwhile testing to prevent bad data saves
@@ -617,16 +625,21 @@ def main():
             start_date_entry = DateEntry(self.frame)
             start_date_entry.grid(row=3, sticky="W")
 
+            end_date_label = Label(self.frame, text='End Date mmm/dd/yr:', **trip_lbl_config)
+            end_date_label.grid(row=4, sticky="W")
+            end_date_entry = DateEntry(self.frame)
+            end_date_entry.grid(row=5, sticky="W")
+
             budget_label = Label(self.frame, text='Budget Total:', **trip_lbl_config)
-            budget_label.grid(row=4, sticky="W")
+            budget_label.grid(row=6, sticky="W")
             budget_entry = Entry(self.frame, textvariable=budget_var, **trip_entry_config)
-            budget_entry.grid(row=5, sticky="W")
+            budget_entry.grid(row=7, sticky="W")
             # budget_entry.insert(0,'$ ') ## TODO: displays $ disapears when typing, change to greyed out one that stays?
 
             misc_label = Label(self.frame, text='Trip Notes:', **trip_lbl_config)
-            misc_label.grid(row=6, sticky="W")
+            misc_label.grid(row=8, sticky="W")
             misc_entry = Text(self.frame, height=8, **trip_entry_config)
-            misc_entry.grid(row=7, sticky="W")
+            misc_entry.grid(row=9, sticky="W")
 
             ###### bottom directory #######
             self.directoryf = Frame(self, bg='#1A6493')
@@ -653,6 +666,9 @@ def main():
                                                                                            start_date_entry.mon_date.get(),
                                                                                            start_date_entry.day_date.get(),
                                                                                            start_date_entry.year_date.get(),
+                                                                                           end_date_entry.mon_date.get(),
+                                                                                           end_date_entry.day_date.get(),
+                                                                                           end_date_entry.year_date.get(),
                                                                                            budget_var.get(),
                                                                                            misc_entry.get("1.0",
                                                                                                           'end-1c'))),
@@ -667,6 +683,9 @@ def main():
                     populate_trip_list = [start_date_entry.mon_date_entry.insert(0, locatorID.mon_date),
                                           start_date_entry.day_date_entry.insert(0, locatorID.day_date),
                                           start_date_entry.year_date_entry.insert(0, locatorID.year_date),
+                                          end_date_entry.mon_date_entry.insert(0, locatorID.end_mon),
+                                          end_date_entry.day_date_entry.insert(0, locatorID.end_day),
+                                          end_date_entry.year_date_entry.insert(0, locatorID.end_year),
                                           budget_entry.insert(0, locatorID.budget),
                                           misc_entry.insert(END, locatorID.note)]
                     for pop in populate_trip_list:
@@ -700,8 +719,8 @@ def main():
             self.frame.bind("<Configure>", self.on_frame_config)
             self.frame.bind_all("<MouseWheel>", self.on_mousewheel)
 
-            photo = PhotoImage(file=resource_path('Airplane_basicsm.png'))
-            cost_btn_config = {'image': photo, 'height': 50, 'width': 365, 'compound': 'left', 'bd': 6,
+
+            cost_btn_config = {'height': 50, 'width': 365, 'compound': 'left', 'bd': 6,
                                'justify': 'left',
                                'anchor': 'w', 'bg': '#EEF7FB'}
 
@@ -733,31 +752,35 @@ def main():
                 compare_l = Label(self.budgetf, text=locatorID.within_budget_check(), bg=budgetcl, width=17)
                 compare_l.grid(row=0, column=2)
 
-                ######### cost buttons ##########
-                if locatorID != None:
-                    try:  # labels by date, and lists buttons for each cost
-                        first_date = (locatorID.trip_plans[0].start_date_month, locatorID.trip_plans[0].start_date_day)
-                        date_config = {'fg': '#145075', 'anchor': 'w', 'width': '45', 'font': ('arial', 10)}
+            ######### cost buttons ##########
+            if locatorID != None:
+                try:  # labels by date, and lists buttons for each cost
+                    first_date = (locatorID.trip_plans[0].start_date_month, locatorID.trip_plans[0].start_date_day)
+                    date_config = {'fg': '#145075', 'anchor': 'w', 'width': '45', 'font': ('arial', 10)}
 
-                        date_label = Label(self.frame,text=first_date[0]+'  '+first_date[1]+' --', **date_config)
-                        date_label.grid()
-                        for n, cost in enumerate(locatorID.trip_plans):
-                            date = cost.start_date_month, cost.start_date_day
-                            if date != first_date:
-                                first_date = date
-                                date_label = Label(self.frame, text=first_date[0]+'  '+first_date[1]+' --', **date_config)
-                                date_label.grid()
-                            cost_button = Button(self.frame, text=cost.__str__(),
-                                                 command=lambda cost=cost: controller.refresh_show_frame(
-                                                     EditCostPage, locatorID, cost), **cost_btn_config)
-                            cost_button.image = photo
-                            cost_button.grid()
+                    date_label = Label(self.frame, text=first_date[0]+'  '+first_date[1]+' --', **date_config)
+                    date_label.grid()
+                    for n, cost in enumerate(locatorID.trip_plans):
+                        date = cost.start_date_month, cost.start_date_day
+                        if date != first_date:
+                            first_date = date
+                            date_label = Label(self.frame, text=first_date[0]+'  '+first_date[1]+' --', **date_config)
+                            date_label.grid()
+                        try:
+                            photo = PhotoImage(file=resource_path(cost.type_logo))
+                        except:  # returns generic pc if trip logo cannot be called
+                            photo = PhotoImage(file=resource_path('Airplane_basicsm.png'))
+                        cost_button = Button(self.frame, text=cost.__str__(),
+                                             command=lambda cost=cost: controller.refresh_show_frame(
+                                                 EditCostPage, locatorID, cost), image=photo,  **cost_btn_config)
+                        cost_button.image = photo
+                        cost_button.grid()
 
-                    except TabError:
-                        no_costs_label = Label(self.frame, text="There are no costs yet or this trip.\n "
-                                                                "Click 'add cost' to create a new one",
-                                               font=('arial', '16'))
-                        no_costs_label.grid()
+                except IndexError:
+                    no_costs_label = Label(self.frame, text="There are no costs yet for this trip.\n "
+                                                            "Click 'add cost' to create a new one",
+                                           font=('arial', '16'))
+                    no_costs_label.grid()
 
             ###### Bottom Buttons #######
             self.directoryf = Frame(self, bg='#1A6493')
@@ -1062,6 +1085,7 @@ def main():
     global vacations  # only need because gui is inside main() and functions arent, can probably merge all later
     vacations = new_or_edit(filename)
     root = TravelApp()
+    root.wm_title("Travel App")
     root.geometry('400x620+600+20')  # window size+ screen placement
     root.mainloop()
 
@@ -1070,7 +1094,7 @@ if __name__ == '__main__':
     main()
 ##############################################################################
 
-## start on icons for vacay and cost type, all saved to trip or class.
+## started on icons for and cost type, saved to class. just need to plug in file names to dictionary
 
 
 ## todo: scrollbar still scrolling on pages under 1 page. add padding maybe? so it doesnt move?
@@ -1080,9 +1104,16 @@ if __name__ == '__main__':
 # TODO: possibly switch over to database not pkl file
 
 # TODO:should be an add in field to add category to any charge... might be unnecessarily difficult. prob not do.
-# TODO:have a add loging to transportation button for things like cruises. just for future tracking
+# TODO:have a add lodging to transportation button for things like cruises. just for future tracking
 # TODO:add sort for cost by cost type, maybe add a buisinees/personal field,day
 
+# todo: add end date for trip and logic for check if lodging covered
+            # add a tracker for cost type per day
+            # add like calendar that tells what is missing from each day. (hidden)
+            # ?seperate screen or header bar that tells what is vital and missing when planning? like lodging
 
-## commit:  color coded months, added text field for misc instead of entry, added date categories to trip details page
-  # simplified insert try fields, removed reservedcost init extras
+# todo: add in real time and hide past events under seperate tab.
+
+### todo: add sort categories for pricing: costtype, personal/business, date, payment method
+
+## commit:
