@@ -5,19 +5,9 @@ import pdb  # python debugger. use pdb.set_trace()
 filename = "pckl_test_file.pkl"
 '''
 travel app;
-chanrge options: 'Transportation', 'Lodging', 'Event', 'Meal', 'Merchandise', 'Fee'
+charge options: 'Transportation', 'Lodging', 'Event', 'Meal', 'Merchandise', 'Fee'
 uses classes to sort and organize and call data as needed
 
-#possible future feature: organizes on calendar, shows what has not been booked for dates, ex. no hotel wednesday night
-
-
-example inputs:
-lodging: price, dates, location, conf#
-transportation: price, dates, company, pickup/dropoff, conf#
-event: event, price, datetime, conf#, location
-food: price, datetime
-merch: item, location, price
-Fee:
 '''
 
 
@@ -51,22 +41,17 @@ class ReservedCost():
         self.company = company
         self.misc = misc
 
-        tlogo_dict = {'Transportation': 'Airplane_basicsm.png',
-                      'Lodging': 'Airplane_basicsm.png',
-                      'Event':'Airplane_basicsm.png',
-                      'Meal': 'Airplane_basicsm.png',
-                      'Merchandise': 'Airplane_basicsm.png',
-                      'Fee': 'Airplane_basicsm.png'}
+        tlogo_dict = {'Transportation': 'vespasm.png',
+                      'Lodging': 'bedsm.png',
+                      'Event':'ad_tix.png',
+                      'Meal': 'foodsm.png',
+                      'Merchandise': 'bbagsm.png',
+                      'Fee': 'moneysm.png'}
         self.type_logo = tlogo_dict[type]
 
     def __str__(self):
         return (("{}\t\t{}\n{}\t\t{}\t\t${}").format(
             self.sub_type, self.company, self.pointa, self.start_time, self.price))
-        # return(("type={}\nprice=${}\npay_method={}\npointa={}\nstart_date={} {}-{}\nstart_time= {}\npointb= {}\nend_date= {} {}-{}\nend_time= {}\nsub_type= {}\nconf= {}\ncompany= {}\nmisc= {}").format(self.type, \
-        #     self.price, self.pay_method, self.pointa, self.start_date_month,self.start_date_day,self.start_date_year,
-        #     self.start_time, self.pointb, self.end_date_month,self.end_date_day,self.end_date_year,
-        #     self.end_time,
-        #     self.sub_type, self.conf, self.company, self.misc))
 
 
 class Trip():
@@ -1094,11 +1079,6 @@ if __name__ == '__main__':
     main()
 ##############################################################################
 
-## started on icons for and cost type, saved to class. just need to plug in file names to dictionary
-
-
-## todo: scrollbar still scrolling on pages under 1 page. add padding maybe? so it doesnt move?
-
 
 # TODO: build tests to automate and check when i make changes
 # TODO: possibly switch over to database not pkl file
@@ -1116,4 +1096,4 @@ if __name__ == '__main__':
 
 ### todo: add sort categories for pricing: costtype, personal/business, date, payment method
 
-## commit:
+## commit:added icons for each charge category
